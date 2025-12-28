@@ -1,4 +1,5 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://auction-manager-ten.vercel.app';
+// For mobile builds, always use the production API URL
+const API_BASE_URL = 'https://auction-manager-ten.vercel.app';
 
 export interface AuctionItem {
     id?: string;
