@@ -88,12 +88,12 @@ app.get('/api/auctions', async (req, res) => {
             result = await db.query.auctions.findMany({
                 where: sql`EXTRACT(MONTH FROM ${auctions.auctionDate}) = ${monthNum} AND EXTRACT(YEAR FROM ${auctions.auctionDate}) = ${yearNum}`,
                 with: { items: true },
-                orderBy: (auctions, { desc }) => [desc(auctions.auctionDate)],
+                orderBy: (auctions, { desc }) => [desc(auctions.auctionDate), desc(auctions.createdAt)],
             });
         } else {
             result = await db.query.auctions.findMany({
                 with: { items: true },
-                orderBy: (auctions, { desc }) => [desc(auctions.auctionDate)],
+                orderBy: (auctions, { desc }) => [desc(auctions.auctionDate), desc(auctions.createdAt)],
             });
         }
 

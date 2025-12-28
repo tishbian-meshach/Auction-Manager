@@ -184,9 +184,12 @@ export function AuctionList() {
             .sort(([a], [b]) => dayjs(b, 'MMMM YYYY').valueOf() - dayjs(a, 'MMMM YYYY').valueOf())
             .map(([month, auctionsInMonth]) => ({
                 month,
-                auctions: auctionsInMonth.sort(
-                    (a, b) => dayjs(b.auctionDate).valueOf() - dayjs(a.auctionDate).valueOf()
-                ),
+                auctions: auctionsInMonth.sort((a, b) => {
+                    const dateDiff = dayjs(b.auctionDate).valueOf() - dayjs(a.auctionDate).valueOf();
+                    if (dateDiff !== 0) return dateDiff;
+                    // Fallback to createdAt if auctionDate is the same
+                    return dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf();
+                }),
             }));
 
         return sortedEntries;
