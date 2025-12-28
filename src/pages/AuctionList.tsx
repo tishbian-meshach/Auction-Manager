@@ -260,280 +260,282 @@ export function AuctionList() {
     };
 
     return (
-        <PullToRefresh onRefresh={handleRefresh} refreshing={isRefreshing}>
-            <div className="min-h-screen pb-24 px-4 pt-6" style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}>
-                <div className="flex items-center justify-between mb-4">
-                    <h1 className="text-2xl font-bold text-neutral-100">Auctions</h1>
-                    <div className="flex items-center gap-2">
-                        <ExportMenu
-                            onExportPDF={handleExportPDF}
-                            onExportExcel={handleExportExcel}
-                            disabled={filteredAuctions.length === 0}
+        <>
+            <PullToRefresh onRefresh={handleRefresh} refreshing={isRefreshing}>
+                <div className="min-h-screen pb-24 px-4 pt-6" style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}>
+                    <div className="flex items-center justify-between mb-4">
+                        <h1 className="text-2xl font-bold text-neutral-100">Auctions</h1>
+                        <div className="flex items-center gap-2">
+                            <ExportMenu
+                                onExportPDF={handleExportPDF}
+                                onExportExcel={handleExportExcel}
+                                disabled={filteredAuctions.length === 0}
+                            />
+                            {isOffline && (
+                                <div className="flex items-center gap-1.5 text-amber-400">
+                                    <WifiOff size={16} />
+                                    <span className="text-xs font-medium">Offline</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Search */}
+                    <div className="relative mb-4">
+                        <Search
+                            size={18}
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500"
                         />
-                        {isOffline && (
-                            <div className="flex items-center gap-1.5 text-amber-400">
-                                <WifiOff size={16} />
-                                <span className="text-xs font-medium">Offline</span>
-                            </div>
-                        )}
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="input pl-10 text-sm"
+                            placeholder="Search by name or mobile"
+                        />
                     </div>
-                </div>
 
-                {/* Search */}
-                <div className="relative mb-4">
-                    <Search
-                        size={18}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500"
-                    />
-                    <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="input pl-10 text-sm"
-                        placeholder="Search by name or mobile"
-                    />
-                </div>
-
-                {/* Filter Type: All, Month, Date */}
-                <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
-                    <button
-                        onClick={() => setFilterType('all')}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${filterType === 'all'
-                            ? 'bg-accent text-white'
-                            : 'bg-background-secondary text-neutral-400 hover:text-neutral-200'
-                            }`}
-                    >
-                        All Time
-                    </button>
-                    <button
-                        onClick={() => setFilterType('month')}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${filterType === 'month'
-                            ? 'bg-accent text-white'
-                            : 'bg-background-secondary text-neutral-400 hover:text-neutral-200'
-                            }`}
-                    >
-                        By Month
-                    </button>
-                    <button
-                        onClick={() => {
-                            setFilterType('date');
-                        }}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${filterType === 'date'
-                            ? 'bg-accent text-white'
-                            : 'bg-background-secondary text-neutral-400 hover:text-neutral-200'
-                            }`}
-                    >
-                        By Date
-                    </button>
-                </div>
-
-                {/* Month Selector */}
-                {filterType === 'month' && (
-                    <div className="flex items-center justify-between bg-background-secondary rounded-lg px-3 py-2 mb-3">
+                    {/* Filter Type: All, Month, Date */}
+                    <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
                         <button
-                            onClick={() => setSelectedMonth(selectedMonth.subtract(1, 'month'))}
-                            className="p-1.5 hover:bg-background-tertiary rounded-lg transition-colors"
+                            onClick={() => setFilterType('all')}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${filterType === 'all'
+                                ? 'bg-accent text-white'
+                                : 'bg-background-secondary text-neutral-400 hover:text-neutral-200'
+                                }`}
                         >
-                            <ChevronLeft size={18} className="text-neutral-300" />
-                        </button>
-                        <span className="font-medium text-neutral-100">
-                            {selectedMonth.format('MMMM YYYY')}
-                        </span>
-                        <button
-                            onClick={() => setSelectedMonth(selectedMonth.add(1, 'month'))}
-                            className="p-1.5 hover:bg-background-tertiary rounded-lg transition-colors"
-                        >
-                            <ChevronRight size={18} className="text-neutral-300" />
-                        </button>
-                    </div>
-                )}
-
-                {/* Date Selector */}
-                {filterType === 'date' && (
-                    <div className="flex items-center justify-between bg-background-secondary rounded-lg px-3 py-2 mb-3">
-                        <button
-                            onClick={() => setSelectedDate(selectedDate.subtract(1, 'day'))}
-                            className="p-1.5 hover:bg-background-tertiary rounded-lg transition-colors"
-                        >
-                            <ChevronLeft size={18} className="text-neutral-300" />
+                            All Time
                         </button>
                         <button
-                            onClick={() => setShowDatePicker(!showDatePicker)}
-                            className="flex items-center gap-2 font-medium text-neutral-100 hover:text-accent transition-colors"
+                            onClick={() => setFilterType('month')}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${filterType === 'month'
+                                ? 'bg-accent text-white'
+                                : 'bg-background-secondary text-neutral-400 hover:text-neutral-200'
+                                }`}
                         >
-                            <Calendar size={16} />
-                            {selectedDate.format('DD MMM YYYY')}
+                            By Month
                         </button>
-                        <button
-                            onClick={() => setSelectedDate(selectedDate.add(1, 'day'))}
-                            className="p-1.5 hover:bg-background-tertiary rounded-lg transition-colors"
-                        >
-                            <ChevronRight size={18} className="text-neutral-300" />
-                        </button>
-                    </div>
-                )}
-
-                {/* Date Picker Popup */}
-                {filterType === 'date' && showDatePicker && (
-                    <DatePickerInline
-                        value={selectedDate}
-                        onChange={(date) => {
-                            setSelectedDate(date);
-                            setShowDatePicker(false);
-                        }}
-                        onClose={() => setShowDatePicker(false)}
-                    />
-                )}
-
-                {/* Payment Filter: All, Paid, Unpaid */}
-                <div className="flex gap-2 mb-4">
-                    <button
-                        onClick={() => setPaymentFilter('all')}
-                        className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${paymentFilter === 'all'
-                            ? 'bg-background-tertiary text-neutral-100 ring-1 ring-neutral-600'
-                            : 'bg-background-secondary text-neutral-500 hover:text-neutral-300'
-                            }`}
-                    >
-                        All
-                        <span className="bg-background text-neutral-400 text-xs px-1.5 py-0.5 rounded">
-                            {counts.all}
-                        </span>
-                    </button>
-                    <button
-                        onClick={() => setPaymentFilter('paid')}
-                        className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${paymentFilter === 'paid'
-                            ? 'bg-green-500/20 text-green-400 ring-1 ring-green-500/50'
-                            : 'bg-background-secondary text-neutral-500 hover:text-neutral-300'
-                            }`}
-                    >
-                        Paid
-                        <span className="bg-background text-neutral-400 text-xs px-1.5 py-0.5 rounded">
-                            {counts.paid}
-                        </span>
-                    </button>
-                    <button
-                        onClick={() => setPaymentFilter('unpaid')}
-                        className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${paymentFilter === 'unpaid'
-                            ? 'bg-red-500/20 text-red-400 ring-1 ring-red-500/50'
-                            : 'bg-background-secondary text-neutral-500 hover:text-neutral-300'
-                            }`}
-                    >
-                        Unpaid
-                        <span className="bg-background text-neutral-400 text-xs px-1.5 py-0.5 rounded">
-                            {counts.unpaid}
-                        </span>
-                    </button>
-                </div>
-
-                {/* Active Filters Summary */}
-                {(filterType !== 'all' || paymentFilter !== 'all') && (
-                    <div className="flex items-center gap-2 mb-4 text-xs">
-                        <span className="text-neutral-500">Filters:</span>
-                        {filterType === 'month' && (
-                            <span className="bg-accent/20 text-accent px-2 py-1 rounded">
-                                {selectedMonth.format('MMM YYYY')}
-                            </span>
-                        )}
-                        {filterType === 'date' && (
-                            <span className="bg-accent/20 text-accent px-2 py-1 rounded">
-                                {selectedDate.format('DD MMM YYYY')}
-                            </span>
-                        )}
-                        {paymentFilter !== 'all' && (
-                            <span className={`px-2 py-1 rounded ${paymentFilter === 'paid' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-                                }`}>
-                                {paymentFilter === 'paid' ? 'Paid' : 'Unpaid'}
-                            </span>
-                        )}
                         <button
                             onClick={() => {
-                                setFilterType('all');
-                                setPaymentFilter('all');
+                                setFilterType('date');
                             }}
-                            className="text-neutral-400 hover:text-neutral-200 underline ml-auto"
+                            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${filterType === 'date'
+                                ? 'bg-accent text-white'
+                                : 'bg-background-secondary text-neutral-400 hover:text-neutral-200'
+                                }`}
                         >
-                            Clear all
+                            By Date
                         </button>
                     </div>
-                )}
 
-                {/* Loading State */}
-                {isLoading && (
-                    <div className="space-y-4">
-                        <div className="h-6 w-32 skeleton rounded mb-3" />
-                        <AuctionCardSkeleton />
-                        <AuctionCardSkeleton />
-                        <AuctionCardSkeleton />
+                    {/* Month Selector */}
+                    {filterType === 'month' && (
+                        <div className="flex items-center justify-between bg-background-secondary rounded-lg px-3 py-2 mb-3">
+                            <button
+                                onClick={() => setSelectedMonth(selectedMonth.subtract(1, 'month'))}
+                                className="p-1.5 hover:bg-background-tertiary rounded-lg transition-colors"
+                            >
+                                <ChevronLeft size={18} className="text-neutral-300" />
+                            </button>
+                            <span className="font-medium text-neutral-100">
+                                {selectedMonth.format('MMMM YYYY')}
+                            </span>
+                            <button
+                                onClick={() => setSelectedMonth(selectedMonth.add(1, 'month'))}
+                                className="p-1.5 hover:bg-background-tertiary rounded-lg transition-colors"
+                            >
+                                <ChevronRight size={18} className="text-neutral-300" />
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Date Selector */}
+                    {filterType === 'date' && (
+                        <div className="flex items-center justify-between bg-background-secondary rounded-lg px-3 py-2 mb-3">
+                            <button
+                                onClick={() => setSelectedDate(selectedDate.subtract(1, 'day'))}
+                                className="p-1.5 hover:bg-background-tertiary rounded-lg transition-colors"
+                            >
+                                <ChevronLeft size={18} className="text-neutral-300" />
+                            </button>
+                            <button
+                                onClick={() => setShowDatePicker(!showDatePicker)}
+                                className="flex items-center gap-2 font-medium text-neutral-100 hover:text-accent transition-colors"
+                            >
+                                <Calendar size={16} />
+                                {selectedDate.format('DD MMM YYYY')}
+                            </button>
+                            <button
+                                onClick={() => setSelectedDate(selectedDate.add(1, 'day'))}
+                                className="p-1.5 hover:bg-background-tertiary rounded-lg transition-colors"
+                            >
+                                <ChevronRight size={18} className="text-neutral-300" />
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Date Picker Popup */}
+                    {filterType === 'date' && showDatePicker && (
+                        <DatePickerInline
+                            value={selectedDate}
+                            onChange={(date) => {
+                                setSelectedDate(date);
+                                setShowDatePicker(false);
+                            }}
+                            onClose={() => setShowDatePicker(false)}
+                        />
+                    )}
+
+                    {/* Payment Filter: All, Paid, Unpaid */}
+                    <div className="flex gap-2 mb-4">
+                        <button
+                            onClick={() => setPaymentFilter('all')}
+                            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${paymentFilter === 'all'
+                                ? 'bg-background-tertiary text-neutral-100 ring-1 ring-neutral-600'
+                                : 'bg-background-secondary text-neutral-500 hover:text-neutral-300'
+                                }`}
+                        >
+                            All
+                            <span className="bg-background text-neutral-400 text-xs px-1.5 py-0.5 rounded">
+                                {counts.all}
+                            </span>
+                        </button>
+                        <button
+                            onClick={() => setPaymentFilter('paid')}
+                            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${paymentFilter === 'paid'
+                                ? 'bg-green-500/20 text-green-400 ring-1 ring-green-500/50'
+                                : 'bg-background-secondary text-neutral-500 hover:text-neutral-300'
+                                }`}
+                        >
+                            Paid
+                            <span className="bg-background text-neutral-400 text-xs px-1.5 py-0.5 rounded">
+                                {counts.paid}
+                            </span>
+                        </button>
+                        <button
+                            onClick={() => setPaymentFilter('unpaid')}
+                            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${paymentFilter === 'unpaid'
+                                ? 'bg-red-500/20 text-red-400 ring-1 ring-red-500/50'
+                                : 'bg-background-secondary text-neutral-500 hover:text-neutral-300'
+                                }`}
+                        >
+                            Unpaid
+                            <span className="bg-background text-neutral-400 text-xs px-1.5 py-0.5 rounded">
+                                {counts.unpaid}
+                            </span>
+                        </button>
                     </div>
-                )}
 
-                {/* Empty State */}
-                {!isLoading && filteredAndGrouped.length === 0 && (
-                    <EmptyState
-                        title="No auctions found"
-                        description={
-                            searchQuery || filterType !== 'all' || paymentFilter !== 'all'
-                                ? 'Try adjusting your search or filters'
-                                : 'Create your first auction to get started'
-                        }
-                    />
-                )}
+                    {/* Active Filters Summary */}
+                    {(filterType !== 'all' || paymentFilter !== 'all') && (
+                        <div className="flex items-center gap-2 mb-4 text-xs">
+                            <span className="text-neutral-500">Filters:</span>
+                            {filterType === 'month' && (
+                                <span className="bg-accent/20 text-accent px-2 py-1 rounded">
+                                    {selectedMonth.format('MMM YYYY')}
+                                </span>
+                            )}
+                            {filterType === 'date' && (
+                                <span className="bg-accent/20 text-accent px-2 py-1 rounded">
+                                    {selectedDate.format('DD MMM YYYY')}
+                                </span>
+                            )}
+                            {paymentFilter !== 'all' && (
+                                <span className={`px-2 py-1 rounded ${paymentFilter === 'paid' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                                    }`}>
+                                    {paymentFilter === 'paid' ? 'Paid' : 'Unpaid'}
+                                </span>
+                            )}
+                            <button
+                                onClick={() => {
+                                    setFilterType('all');
+                                    setPaymentFilter('all');
+                                }}
+                                className="text-neutral-400 hover:text-neutral-200 underline ml-auto"
+                            >
+                                Clear all
+                            </button>
+                        </div>
+                    )}
 
-                {/* Auction List */}
-                {!isLoading && filteredAndGrouped.length > 0 && (
-                    <div className="space-y-6">
-                        {filteredAndGrouped.map(({ month, auctions: monthAuctions }) => (
-                            <div key={month}>
-                                <h2 className="text-sm font-semibold text-neutral-400 uppercase tracking-wider mb-3">
-                                    {month} ({monthAuctions.length})
-                                </h2>
-                                <div className="space-y-3">
-                                    {monthAuctions.map((auction) => (
-                                        <div
-                                            key={auction.id}
-                                            onClick={() => handleAuctionClick(auction)}
-                                            className="cursor-pointer"
-                                        >
-                                            <AuctionCard
-                                                auction={auction}
-                                                onMarkPaid={handleMarkPaid}
-                                                isUpdating={updatingId === auction.id}
-                                            />
-                                        </div>
-                                    ))}
+                    {/* Loading State */}
+                    {isLoading && (
+                        <div className="space-y-4">
+                            <div className="h-6 w-32 skeleton rounded mb-3" />
+                            <AuctionCardSkeleton />
+                            <AuctionCardSkeleton />
+                            <AuctionCardSkeleton />
+                        </div>
+                    )}
+
+                    {/* Empty State */}
+                    {!isLoading && filteredAndGrouped.length === 0 && (
+                        <EmptyState
+                            title="No auctions found"
+                            description={
+                                searchQuery || filterType !== 'all' || paymentFilter !== 'all'
+                                    ? 'Try adjusting your search or filters'
+                                    : 'Create your first auction to get started'
+                            }
+                        />
+                    )}
+
+                    {/* Auction List */}
+                    {!isLoading && filteredAndGrouped.length > 0 && (
+                        <div className="space-y-6">
+                            {filteredAndGrouped.map(({ month, auctions: monthAuctions }) => (
+                                <div key={month}>
+                                    <h2 className="text-sm font-semibold text-neutral-400 uppercase tracking-wider mb-3">
+                                        {month} ({monthAuctions.length})
+                                    </h2>
+                                    <div className="space-y-3">
+                                        {monthAuctions.map((auction) => (
+                                            <div
+                                                key={auction.id}
+                                                onClick={() => handleAuctionClick(auction)}
+                                                className="cursor-pointer"
+                                            >
+                                                <AuctionCard
+                                                    auction={auction}
+                                                    onMarkPaid={handleMarkPaid}
+                                                    isUpdating={updatingId === auction.id}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </PullToRefresh>
 
-                {/* Auction Detail Modal */}
-                <AuctionDetailModal
-                    auction={selectedAuction}
-                    isOpen={!!selectedAuction}
-                    onClose={() => setSelectedAuction(null)}
-                    onMarkPaid={handleMarkPaid}
-                />
+            {/* Auction Detail Modal */}
+            <AuctionDetailModal
+                auction={selectedAuction}
+                isOpen={!!selectedAuction}
+                onClose={() => setSelectedAuction(null)}
+                onMarkPaid={handleMarkPaid}
+            />
 
-                {/* Confirm Dialog */}
-                <ConfirmDialog
-                    isOpen={confirmDialog.isOpen}
-                    title="Confirm Payment"
-                    message="Are you sure you want to mark this auction as paid? This action cannot be undone."
-                    confirmLabel="Mark as Paid"
-                    cancelLabel="Cancel"
-                    onConfirm={confirmMarkPaid}
-                    onCancel={() => setConfirmDialog({ isOpen: false, auctionId: null })}
-                />
+            {/* Confirm Dialog */}
+            <ConfirmDialog
+                isOpen={confirmDialog.isOpen}
+                title="Confirm Payment"
+                message="Are you sure you want to mark this auction as paid? This action cannot be undone."
+                confirmLabel="Mark as Paid"
+                cancelLabel="Cancel"
+                onConfirm={confirmMarkPaid}
+                onCancel={() => setConfirmDialog({ isOpen: false, auctionId: null })}
+            />
 
-                <Toast
-                    message={toast.message}
-                    type={toast.type}
-                    visible={toast.visible}
-                    onClose={hideToast}
-                />
-            </div>
-        </PullToRefresh>
+            <Toast
+                message={toast.message}
+                type={toast.type}
+                visible={toast.visible}
+                onClose={hideToast}
+            />
+        </>
     );
 }
 
