@@ -5,7 +5,7 @@ import { db } from '../src/db/client';
 import { auctions, auctionItems } from '../src/db/schema';
 import { eq, and, sql } from 'drizzle-orm';
 
-const app = express();
+export const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(cors());
@@ -133,7 +133,9 @@ app.patch('/api/auctions/:id/pay', async (req, res) => {
 
 const HOST = '0.0.0.0';
 
-app.listen(Number(PORT), HOST, () => {
-    console.log(`Server running on http://${HOST}:${PORT}`);
-    console.log(`Local network access: http://<YOUR_IP>:${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(Number(PORT), HOST, () => {
+        console.log(`Server running on http://${HOST}:${PORT}`);
+        console.log(`Local network access: http://<YOUR_IP>:${PORT}`);
+    });
+}
