@@ -43,18 +43,7 @@ export function AuctionDetailModal({
 
                 {/* Content */}
                 <div className="p-4 space-y-4">
-                    {/* Action Button */}
-                    {!auction.isPaid && onMarkPaid && (
-                        <button
-                            onClick={() => {
-                                onMarkPaid(auction.id);
-                                onClose();
-                            }}
-                            className="btn btn-success w-full py-3 shadow-lg shadow-green-500/20"
-                        >
-                            Mark as Paid
-                        </button>
-                    )}
+
 
                     {/* Person Info */}
                     <div className="card space-y-3">
@@ -143,6 +132,18 @@ export function AuctionDetailModal({
                             </span>
                         </div>
                     </div>
+                    {/* Action Button */}
+                    {!auction.isPaid && onMarkPaid && (
+                        <button
+                            onClick={() => {
+                                onMarkPaid(auction.id);
+                                onClose();
+                            }}
+                            className="btn btn-success w-full py-3 shadow-lg shadow-green-500/20"
+                        >
+                            Mark as Paid
+                        </button>
+                    )}
 
                     {/* Created At */}
                     <div className="text-center text-xs text-neutral-500">
