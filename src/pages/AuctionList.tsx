@@ -128,7 +128,7 @@ export function AuctionList() {
         const id = confirmDialog.auctionId;
         if (!id) return;
 
-        setConfirmDialog({ isOpen: false, auctionId: null });
+        setConfirmDialog({ isOpen: false, auctionId: null, type: 'pay' });
         setUpdatingId(id);
 
         try {
