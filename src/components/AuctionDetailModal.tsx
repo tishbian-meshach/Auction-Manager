@@ -26,7 +26,7 @@ export function AuctionDetailModal({
     }).format(parseFloat(auction.totalAmount));
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-12">
             <div className="absolute inset-0 bg-black/70" onClick={onClose} />
 
             <div className="relative bg-background-secondary w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-neutral-700 shadow-2xl">
@@ -43,6 +43,19 @@ export function AuctionDetailModal({
 
                 {/* Content */}
                 <div className="p-4 space-y-4">
+                    {/* Action Button */}
+                    {!auction.isPaid && onMarkPaid && (
+                        <button
+                            onClick={() => {
+                                onMarkPaid(auction.id);
+                                onClose();
+                            }}
+                            className="btn btn-success w-full py-3 shadow-lg shadow-green-500/20"
+                        >
+                            Mark as Paid
+                        </button>
+                    )}
+
                     {/* Person Info */}
                     <div className="card space-y-3">
                         <div className="flex items-center gap-3">
@@ -135,19 +148,6 @@ export function AuctionDetailModal({
                     <div className="text-center text-xs text-neutral-500">
                         Created on {formattedCreatedAt}
                     </div>
-
-                    {/* Action Button */}
-                    {!auction.isPaid && onMarkPaid && (
-                        <button
-                            onClick={() => {
-                                onMarkPaid(auction.id);
-                                onClose();
-                            }}
-                            className="btn btn-success w-full py-3"
-                        >
-                            Mark as Paid
-                        </button>
-                    )}
                 </div>
             </div>
         </div>
