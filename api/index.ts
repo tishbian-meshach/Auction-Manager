@@ -37,9 +37,12 @@ export const auctionItemsRelations = relations(auctionItems, ({ one }) => ({
 
 // Database client
 const sqlClient = neon(process.env.DATABASE_URL || '');
-const db = drizzle(sqlClient, {
-    schema: { auctions, auctionItems, auctionsRelations, auctionItemsRelations }
-});
+
+// Schema object for Drizzle - only include tables, not relation definitions in schema
+const schema = { auctions, auctionItems };
+
+// Drizzle instance with relations for queries
+const db = drizzle(sqlClient, { schema });
 
 // Express app
 const app = express();
@@ -99,6 +102,8 @@ app.get('/api/auctions', async (req, res) => {
 // Create auction
 app.post('/api/auctions', async (req, res) => {
     try {
+        console.log('POST /api/auctions - Request body:', JSON.stringify(req.body));
+
         const { personName, mobileNumber, auctionDate, items, isPaid } = req.body;
 
         if (!personName || !mobileNumber || !auctionDate || !items || items.length === 0) {
@@ -111,32 +116,35 @@ app.post('/api/auctions', async (req, res) => {
             sum + (item.quantity * item.price), 0
         );
 
+        console.log('Inserting auction...');
         const [newAuction] = await db.insert(auctions).values({
             personName,
             mobileNumber,
-            auctionDate,
+            auctionDate: new Date(auctionDate),
             totalAmount: totalAmount.toFixed(2),
             isPaid: isPaid || false,
         }).returning();
+        console.log('Auction inserted:', newAuction.id);
 
         const itemsToInsert = items.map((item: { itemName: string; quantity: number; price: number }) => ({
             auctionId: newAuction.id,
             itemName: item.itemName,
             quantity: item.quantity,
-            price: item.price.toFixed(2),
+            price: parseFloat(String(item.price)).toFixed(2),
         }));
 
-        await db.insert(auctionItems).values(itemsToInsert);
+        console.log('Inserting items...');
+        const insertedItems = await db.insert(auctionItems).values(itemsToInsert).returning();
+        console.log('Items inserted:', insertedItems.length);
 
-        const completeAuction = await db.query.auctions.findFirst({
-            where: eq(auctions.id, newAuction.id),
-            with: { items: true },
+        // Return the auction with items directly
+        res.status(201).json({
+            ...newAuction,
+            items: insertedItems,
         });
-
-        res.status(201).json(completeAuction);
     } catch (error: any) {
         console.error('Error creating auction:', error);
-        res.status(500).json({ error: 'Failed to create auction', message: error.message });
+        res.status(500).json({ error: 'Failed to create auction', message: error.message, stack: error.stack });
     }
 });
 
