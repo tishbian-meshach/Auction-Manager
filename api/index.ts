@@ -38,8 +38,13 @@ export const auctionItemsRelations = relations(auctionItems, ({ one }) => ({
 // Database client
 const sqlClient = neon(process.env.DATABASE_URL || '');
 
-// Schema object for Drizzle - only include tables, not relation definitions in schema
-const schema = { auctions, auctionItems };
+// Schema object for Drizzle - include tables AND relations for db.query to work
+const schema = {
+    auctions,
+    auctionItems,
+    auctionsRelations,
+    auctionItemsRelations
+};
 
 // Drizzle instance with relations for queries
 const db = drizzle(sqlClient, { schema });
