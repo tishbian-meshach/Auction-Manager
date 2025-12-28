@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-import { pgTable, text, decimal, boolean, timestamp, uuid, integer } from 'drizzle-orm/pg-core';
+import { pgTable, text, decimal, boolean, timestamp, uuid, integer, date } from 'drizzle-orm/pg-core';
 import { relations, eq, sql } from 'drizzle-orm';
 
 // Schema definitions (inline to avoid import path issues)
@@ -10,7 +10,7 @@ export const auctions = pgTable('auctions', {
     id: uuid('id').defaultRandom().primaryKey(),
     personName: text('person_name').notNull(),
     mobileNumber: text('mobile_number').notNull(),
-    auctionDate: timestamp('auction_date').notNull(),
+    auctionDate: date('auction_date').notNull(),
     totalAmount: decimal('total_amount', { precision: 10, scale: 2 }).notNull(),
     isPaid: boolean('is_paid').default(false).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
