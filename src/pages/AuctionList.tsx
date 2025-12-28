@@ -238,7 +238,7 @@ export function AuctionList() {
     };
 
     return (
-        <div className="min-h-screen pb-24 px-4 pt-6">
+        <div className="min-h-screen pb-24 px-4 pt-6" style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}>
             <div className="flex items-center justify-between mb-4">
                 <h1 className="text-2xl font-bold text-neutral-100">Auctions</h1>
                 <div className="flex items-center gap-2">

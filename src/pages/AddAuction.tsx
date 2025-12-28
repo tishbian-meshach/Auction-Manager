@@ -130,7 +130,7 @@ export function AddAuction() {
     };
 
     return (
-        <div className="min-h-screen pb-24 px-4 pt-6">
+        <div className="min-h-screen pb-24 px-4 pt-6" style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}>
             <h1 className="text-2xl font-bold text-neutral-100 mb-6">Add Auction</h1>
 
             <form onSubmit={handleSubmit} className="space-y-5">
@@ -268,8 +268,8 @@ export function AddAuction() {
                             type="button"
                             onClick={() => setIsPaid(true)}
                             className={`flex-1 py-3 rounded-lg font-medium transition-all ${isPaid
-                                    ? 'bg-success text-white'
-                                    : 'bg-background-tertiary text-neutral-400 hover:text-neutral-200'
+                                ? 'bg-success text-white'
+                                : 'bg-background-tertiary text-neutral-400 hover:text-neutral-200'
                                 }`}
                         >
                             Paid
@@ -278,8 +278,8 @@ export function AddAuction() {
                             type="button"
                             onClick={() => setIsPaid(false)}
                             className={`flex-1 py-3 rounded-lg font-medium transition-all ${!isPaid
-                                    ? 'bg-danger text-white'
-                                    : 'bg-background-tertiary text-neutral-400 hover:text-neutral-200'
+                                ? 'bg-danger text-white'
+                                : 'bg-background-tertiary text-neutral-400 hover:text-neutral-200'
                                 }`}
                         >
                             Not Paid
