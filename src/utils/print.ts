@@ -35,6 +35,9 @@ function generateBillPDF(auction: Auction): jsPDF {
   // Header
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
+  doc.text("ST.JOHN'S CHURCH", pageWidth / 2, y, { align: 'center' });
+  y += 6;
+  doc.setFontSize(10);
   doc.text('AUCTION BILL', pageWidth / 2, y, { align: 'center' });
   y += 6;
 
@@ -110,7 +113,7 @@ function generateBillPDF(auction: Auction): jsPDF {
   doc.setFontSize(7);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(100);
-  doc.text('Thank you for your business!', pageWidth / 2, y, { align: 'center' });
+  doc.text('May God Bless You!', pageWidth / 2, y, { align: 'center' });
   y += 4;
   doc.text(`Generated: ${dayjs().format('DD MMM YYYY, hh:mm A')}`, pageWidth / 2, y, { align: 'center' });
 
@@ -290,7 +293,8 @@ function printBillWeb(auction: Auction): void {
     </head>
     <body>
       <div class="header">
-        <h1>AUCTION BILL</h1>
+        <h1>ST.JOHN'S CHURCH</h1>
+        <p>AUCTION BILL</p>
         <p>Invoice / Bill of Sale</p>
       </div>
 
@@ -342,7 +346,7 @@ function printBillWeb(auction: Auction): void {
       </div>
 
       <div class="footer">
-        <p>Thank you for your business!</p>
+        <p>May God Bless You!</p>
         <p style="margin-top: 5px;">Generated on ${dayjs().format('DD MMM YYYY, hh:mm A')}</p>
       </div>
 
