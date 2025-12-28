@@ -26,10 +26,10 @@ export function AuctionDetailModal({
     }).format(parseFloat(auction.totalAmount));
 
     return (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/70" onClick={onClose} />
 
-            <div className="relative bg-background-secondary w-full max-w-md max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border border-neutral-700 shadow-2xl">
+            <div className="relative bg-background-secondary w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-neutral-700 shadow-2xl">
                 {/* Header */}
                 <div className="sticky top-0 bg-background-secondary border-b border-neutral-700 px-4 py-4 flex items-center justify-between">
                     <h2 className="text-lg font-bold text-neutral-100">Auction Details</h2>
