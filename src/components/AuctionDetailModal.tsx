@@ -1,4 +1,4 @@
-import { X, User, Phone, Calendar, Package, IndianRupee } from 'lucide-react';
+import { X, User, Phone, Calendar, Package, IndianRupee, Pencil, Trash2 } from 'lucide-react';
 import dayjs from 'dayjs';
 import type { Auction } from '../api';
 
@@ -7,6 +7,8 @@ interface AuctionDetailModalProps {
     isOpen: boolean;
     onClose: () => void;
     onMarkPaid?: (id: string) => void;
+    onEdit?: (auction: Auction) => void;
+    onDelete?: (id: string) => void;
 }
 
 export function AuctionDetailModal({
@@ -14,6 +16,8 @@ export function AuctionDetailModal({
     isOpen,
     onClose,
     onMarkPaid,
+    onEdit,
+    onDelete,
 }: AuctionDetailModalProps) {
     if (!isOpen || !auction) return null;
 
@@ -132,18 +136,43 @@ export function AuctionDetailModal({
                             </span>
                         </div>
                     </div>
-                    {/* Action Button */}
-                    {!auction.isPaid && onMarkPaid && (
-                        <button
-                            onClick={() => {
-                                onMarkPaid(auction.id);
-                                onClose();
-                            }}
-                            className="btn btn-success w-full py-3 shadow-lg shadow-green-500/20"
-                        >
-                            Mark as Paid
-                        </button>
-                    )}
+                    {/* Action Buttons */}
+                    <div className="flex gap-2">
+                        {!auction.isPaid && onMarkPaid && (
+                            <button
+                                onClick={() => {
+                                    onMarkPaid(auction.id);
+                                    onClose();
+                                }}
+                                className="btn btn-success flex-1 py-3 shadow-lg shadow-green-500/20"
+                            >
+                                Mark as Paid
+                            </button>
+                        )}
+                        {onEdit && (
+                            <button
+                                onClick={() => {
+                                    onEdit(auction);
+                                    onClose();
+                                }}
+                                className="btn btn-ghost p-3"
+                                title="Edit Auction"
+                            >
+                                <Pencil size={20} />
+                            </button>
+                        )}
+                        {onDelete && (
+                            <button
+                                onClick={() => {
+                                    onDelete(auction.id);
+                                }}
+                                className="btn btn-ghost p-3 text-red-400 hover:bg-red-500/20"
+                                title="Delete Auction"
+                            >
+                                <Trash2 size={20} />
+                            </button>
+                        )}
+                    </div>
 
                     {/* Created At */}
                     <div className="text-center text-xs text-neutral-500">

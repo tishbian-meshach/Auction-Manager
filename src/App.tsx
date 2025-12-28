@@ -11,6 +11,7 @@ function App() {
           <Routes>
             <Route path="/" element={<AddAuction />} />
             <Route path="/auctions" element={<AuctionList />} />
+            <Route path="/auctions/edit/:id" element={<AddAuction />} />
           </Routes>
         </main>
         <BottomNav />

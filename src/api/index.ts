@@ -72,4 +72,30 @@ export const api = {
 
         return response.json();
     },
+
+    async deleteAuction(id: string): Promise<void> {
+        const response = await fetch(`${API_BASE_URL}/api/auctions/${id}`, {
+            method: 'DELETE',
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to delete auction');
+        }
+    },
+
+    async updateAuction(id: string, data: CreateAuctionPayload): Promise<Auction> {
+        const response = await fetch(`${API_BASE_URL}/api/auctions/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to update auction');
+        }
+
+        return response.json();
+    },
 };

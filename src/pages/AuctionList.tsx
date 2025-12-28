@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, WifiOff, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import dayjs from 'dayjs';
 import { api, type Auction } from '../api';
@@ -33,11 +34,13 @@ export function AuctionList() {
 
     const [updatingId, setUpdatingId] = useState<string | null>(null);
     const [selectedAuction, setSelectedAuction] = useState<Auction | null>(null);
-    const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; auctionId: string | null }>({
+    const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; auctionId: string | null; type: 'pay' | 'delete' }>({
         isOpen: false,
         auctionId: null,
+        type: 'pay',
     });
     const { toast, showToast, hideToast } = useToast();
+    const navigate = useNavigate();
 
     const fetchAuctions = async (isRefresh = false) => {
         try {
@@ -106,7 +109,19 @@ export function AuctionList() {
             showToast('Cannot update while offline', 'error');
             return;
         }
-        setConfirmDialog({ isOpen: true, auctionId: id });
+        setConfirmDialog({ isOpen: true, auctionId: id, type: 'pay' });
+    };
+
+    const handleDeleteAuction = (id: string) => {
+        if (isOffline) {
+            showToast('Cannot delete while offline', 'error');
+            return;
+        }
+        setConfirmDialog({ isOpen: true, auctionId: id, type: 'delete' });
+    };
+
+    const handleEditAuction = (auction: Auction) => {
+        navigate(`/auctions/edit/${auction.id}`);
     };
 
     const confirmMarkPaid = async () => {
@@ -131,6 +146,31 @@ export function AuctionList() {
             showToast('Payment status updated', 'success');
         } catch (error) {
             showToast('Failed to update payment status', 'error');
+        } finally {
+            setUpdatingId(null);
+        }
+    };
+
+    const confirmDeleteAuction = async () => {
+        const id = confirmDialog.auctionId;
+        if (!id) return;
+
+        setConfirmDialog({ isOpen: false, auctionId: null, type: 'pay' });
+        setUpdatingId(id);
+
+        try {
+            await api.deleteAuction(id);
+            const updatedAuctions = auctions.filter((auction) => auction.id !== id);
+            setAuctions(updatedAuctions);
+            await storage.saveAuctions(updatedAuctions);
+
+            if (selectedAuction?.id === id) {
+                setSelectedAuction(null);
+            }
+
+            showToast('Auction deleted successfully', 'success');
+        } catch (error) {
+            showToast('Failed to delete auction', 'error');
         } finally {
             setUpdatingId(null);
         }
@@ -516,17 +556,22 @@ export function AuctionList() {
                 isOpen={!!selectedAuction}
                 onClose={() => setSelectedAuction(null)}
                 onMarkPaid={handleMarkPaid}
+                onEdit={handleEditAuction}
+                onDelete={handleDeleteAuction}
             />
 
             {/* Confirm Dialog */}
             <ConfirmDialog
                 isOpen={confirmDialog.isOpen}
-                title="Confirm Payment"
-                message="Are you sure you want to mark this auction as paid? This action cannot be undone."
-                confirmLabel="Mark as Paid"
+                title={confirmDialog.type === 'delete' ? 'Delete Auction' : 'Confirm Payment'}
+                message={confirmDialog.type === 'delete'
+                    ? 'Are you sure you want to delete this auction? This action cannot be undone.'
+                    : 'Are you sure you want to mark this auction as paid? This action cannot be undone.'
+                }
+                confirmLabel={confirmDialog.type === 'delete' ? 'Delete' : 'Mark as Paid'}
                 cancelLabel="Cancel"
-                onConfirm={confirmMarkPaid}
-                onCancel={() => setConfirmDialog({ isOpen: false, auctionId: null })}
+                onConfirm={confirmDialog.type === 'delete' ? confirmDeleteAuction : confirmMarkPaid}
+                onCancel={() => setConfirmDialog({ isOpen: false, auctionId: null, type: 'pay' })}
             />
 
             <Toast

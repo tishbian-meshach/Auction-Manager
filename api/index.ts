@@ -175,4 +175,83 @@ app.patch('/api/auctions/:id/pay', async (req, res) => {
     }
 });
 
+// Delete auction
+app.delete('/api/auctions/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // First delete related items (foreign key constraint)
+        await db.delete(auctionItems).where(eq(auctionItems.auctionId, id));
+
+        // Then delete the auction
+        const [deletedAuction] = await db
+            .delete(auctions)
+            .where(eq(auctions.id, id))
+            .returning();
+
+        if (!deletedAuction) {
+            return res.status(404).json({ error: 'Auction not found' });
+        }
+
+        res.json({ success: true, message: 'Auction deleted successfully' });
+    } catch (error: any) {
+        console.error('Error deleting auction:', error);
+        res.status(500).json({ error: 'Failed to delete auction', message: error.message });
+    }
+});
+
+// Update auction
+app.put('/api/auctions/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { personName, mobileNumber, auctionDate, items, isPaid } = req.body;
+
+        if (!personName || !mobileNumber || !auctionDate || !items || items.length === 0) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        // Calculate new total
+        const totalAmount = items.reduce((sum: number, item: { price: number }) =>
+            sum + parseFloat(String(item.price)), 0
+        );
+
+        // Update auction
+        const [updatedAuction] = await db
+            .update(auctions)
+            .set({
+                personName,
+                mobileNumber,
+                auctionDate: String(auctionDate).split('T')[0],
+                totalAmount: totalAmount.toFixed(2),
+                isPaid: isPaid || false,
+            })
+            .where(eq(auctions.id, id))
+            .returning();
+
+        if (!updatedAuction) {
+            return res.status(404).json({ error: 'Auction not found' });
+        }
+
+        // Delete old items and insert new ones
+        await db.delete(auctionItems).where(eq(auctionItems.auctionId, id));
+
+        const itemsToInsert = items.map((item: { itemName: string; quantity: number; price: number }) => ({
+            auctionId: id,
+            itemName: item.itemName,
+            quantity: item.quantity,
+            price: parseFloat(String(item.price)),
+        }));
+
+        const insertedItems = await db.insert(auctionItems).values(itemsToInsert).returning();
+
+        res.json({
+            ...updatedAuction,
+            items: insertedItems,
+        });
+    } catch (error: any) {
+        console.error('Error updating auction:', error);
+        res.status(500).json({ error: 'Failed to update auction', message: error.message });
+    }
+});
+
 export default app;

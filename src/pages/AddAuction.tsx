@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Plus, Trash2, Loader2 } from 'lucide-react';
 import dayjs from 'dayjs';
 import { api, type CreateAuctionPayload } from '../api';
@@ -16,6 +17,10 @@ interface ItemInput {
 const generateId = () => Math.random().toString(36).substring(2, 9);
 
 export function AddAuction() {
+    const { id: editId } = useParams<{ id: string }>();
+    const navigate = useNavigate();
+    const isEditMode = Boolean(editId);
+
     const [personName, setPersonName] = useState('');
     const [mobileNumber, setMobileNumber] = useState('');
     const [auctionDate, setAuctionDate] = useState(dayjs().format('YYYY-MM-DD'));
@@ -24,8 +29,41 @@ export function AddAuction() {
         { id: generateId(), itemName: '', quantity: '', price: '' },
     ]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLoadingAuction, setIsLoadingAuction] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const { toast, showToast, hideToast } = useToast();
+
+    // Fetch existing auction if in edit mode
+    useEffect(() => {
+        if (editId) {
+            setIsLoadingAuction(true);
+            api.getAuctions().then((auctions) => {
+                const auction = auctions.find((a) => a.id === editId);
+                if (auction) {
+                    setPersonName(auction.personName);
+                    setMobileNumber(auction.mobileNumber);
+                    setAuctionDate(dayjs(auction.auctionDate).format('YYYY-MM-DD'));
+                    setIsPaid(auction.isPaid);
+                    setItems(
+                        auction.items.map((item) => ({
+                            id: item.id || generateId(),
+                            itemName: item.itemName,
+                            quantity: item.quantity.toString(),
+                            price: item.price.toString(),
+                        }))
+                    );
+                } else {
+                    showToast('Auction not found', 'error');
+                    navigate('/auctions');
+                }
+            }).catch(() => {
+                showToast('Failed to load auction', 'error');
+                navigate('/auctions');
+            }).finally(() => {
+                setIsLoadingAuction(false);
+            });
+        }
+    }, [editId]);
 
     const addItem = () => {
         setItems([...items, { id: generateId(), itemName: '', quantity: '', price: '' }]);
@@ -128,180 +166,222 @@ export function AddAuction() {
         }
     };
 
+    const handleUpdate = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!validate() || !editId) return;
+
+        setIsSubmitting(true);
+
+        try {
+            const payload: CreateAuctionPayload = {
+                personName: personName.trim(),
+                mobileNumber: mobileNumber.trim(),
+                auctionDate,
+                isPaid,
+                items: items
+                    .filter(
+                        (item) =>
+                            item.itemName.trim() && parseFloat(item.quantity) > 0 && parseFloat(item.price) > 0
+                    )
+                    .map((item) => ({
+                        itemName: item.itemName.trim(),
+                        quantity: parseInt(item.quantity, 10),
+                        price: parseFloat(item.price),
+                    })),
+            };
+
+            await api.updateAuction(editId, payload);
+
+            showToast('Auction updated successfully', 'success');
+            navigate('/auctions');
+        } catch (error) {
+            showToast(error instanceof Error ? error.message : 'Failed to update auction', 'error');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     return (
         <div className="min-h-screen pb-24 px-4 pt-6" style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}>
-            <h1 className="text-2xl font-bold text-neutral-100 mb-6">Add Auction</h1>
+            <h1 className="text-2xl font-bold text-neutral-100 mb-6">{isEditMode ? 'Edit Auction' : 'Add Auction'}</h1>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-                {/* Person Name */}
-                <div>
-                    <label className="block text-sm font-medium text-neutral-300 mb-2">
-                        Person Name
-                    </label>
-                    <input
-                        type="text"
-                        value={personName}
-                        onChange={(e) => setPersonName(e.target.value)}
-                        className={`input ${errors.personName ? 'border-danger' : ''}`}
-                        placeholder="Enter person name"
-                    />
-                    {errors.personName && (
-                        <p className="text-sm text-danger mt-1">{errors.personName}</p>
-                    )}
+            {isLoadingAuction ? (
+                <div className="flex items-center justify-center py-12">
+                    <Loader2 size={32} className="animate-spin text-accent" />
                 </div>
-
-                {/* Mobile Number */}
-                <div>
-                    <label className="block text-sm font-medium text-neutral-300 mb-2">
-                        Mobile Number
-                    </label>
-                    <input
-                        type="tel"
-                        value={mobileNumber}
-                        onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                        className={`input ${errors.mobileNumber ? 'border-danger' : ''}`}
-                        placeholder="Enter 10-digit mobile number"
-                        inputMode="numeric"
-                    />
-                    {errors.mobileNumber && (
-                        <p className="text-sm text-danger mt-1">{errors.mobileNumber}</p>
-                    )}
-                </div>
-
-                {/* Auction Date - Custom DatePicker */}
-                <div>
-                    <label className="block text-sm font-medium text-neutral-300 mb-2">
-                        Auction Date
-                    </label>
-                    <DatePicker
-                        value={auctionDate}
-                        onChange={setAuctionDate}
-                        error={!!errors.auctionDate}
-                    />
-                    {errors.auctionDate && (
-                        <p className="text-sm text-danger mt-1">{errors.auctionDate}</p>
-                    )}
-                </div>
-
-                {/* Items Section */}
-                <div>
-                    <div className="flex items-center justify-between mb-3">
-                        <label className="block text-sm font-medium text-neutral-300">Items</label>
-                        <button type="button" onClick={addItem} className="btn btn-ghost text-sm py-1.5">
-                            <Plus size={16} />
-                            Add Item
-                        </button>
+            ) : (
+                <form onSubmit={isEditMode ? handleUpdate : handleSubmit} className="space-y-5">
+                    {/* Person Name */}
+                    <div>
+                        <label className="block text-sm font-medium text-neutral-300 mb-2">
+                            Person Name
+                        </label>
+                        <input
+                            type="text"
+                            value={personName}
+                            onChange={(e) => setPersonName(e.target.value)}
+                            className={`input ${errors.personName ? 'border-danger' : ''}`}
+                            placeholder="Enter person name"
+                        />
+                        {errors.personName && (
+                            <p className="text-sm text-danger mt-1">{errors.personName}</p>
+                        )}
                     </div>
 
-                    {errors.items && <p className="text-sm text-danger mb-3">{errors.items}</p>}
+                    {/* Mobile Number */}
+                    <div>
+                        <label className="block text-sm font-medium text-neutral-300 mb-2">
+                            Mobile Number
+                        </label>
+                        <input
+                            type="tel"
+                            value={mobileNumber}
+                            onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                            className={`input ${errors.mobileNumber ? 'border-danger' : ''}`}
+                            placeholder="Enter 10-digit mobile number"
+                            inputMode="numeric"
+                        />
+                        {errors.mobileNumber && (
+                            <p className="text-sm text-danger mt-1">{errors.mobileNumber}</p>
+                        )}
+                    </div>
 
-                    <div className="space-y-3">
-                        {items.map((item, index) => (
-                            <div key={item.id} className="card p-3 space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-xs text-neutral-500 font-medium">
-                                        Item {index + 1}
-                                    </span>
-                                    {items.length > 1 && (
-                                        <button
-                                            type="button"
-                                            onClick={() => removeItem(item.id)}
-                                            className="p-1.5 text-neutral-400 hover:text-danger hover:bg-danger/10 rounded-lg transition-colors"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    )}
-                                </div>
+                    {/* Auction Date - Custom DatePicker */}
+                    <div>
+                        <label className="block text-sm font-medium text-neutral-300 mb-2">
+                            Auction Date
+                        </label>
+                        <DatePicker
+                            value={auctionDate}
+                            onChange={setAuctionDate}
+                            error={!!errors.auctionDate}
+                        />
+                        {errors.auctionDate && (
+                            <p className="text-sm text-danger mt-1">{errors.auctionDate}</p>
+                        )}
+                    </div>
 
-                                <input
-                                    type="text"
-                                    value={item.itemName}
-                                    onChange={(e) => updateItem(item.id, 'itemName', e.target.value)}
-                                    className="input text-sm py-2.5"
-                                    placeholder="Item name"
-                                />
+                    {/* Items Section */}
+                    <div>
+                        <div className="flex items-center justify-between mb-3">
+                            <label className="block text-sm font-medium text-neutral-300">Items</label>
+                            <button type="button" onClick={addItem} className="btn btn-ghost text-sm py-1.5">
+                                <Plus size={16} />
+                                Add Item
+                            </button>
+                        </div>
 
-                                <div className="grid grid-cols-2 gap-3">
+                        {errors.items && <p className="text-sm text-danger mb-3">{errors.items}</p>}
+
+                        <div className="space-y-3">
+                            {items.map((item, index) => (
+                                <div key={item.id} className="card p-3 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs text-neutral-500 font-medium">
+                                            Item {index + 1}
+                                        </span>
+                                        {items.length > 1 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => removeItem(item.id)}
+                                                className="p-1.5 text-neutral-400 hover:text-danger hover:bg-danger/10 rounded-lg transition-colors"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        )}
+                                    </div>
+
                                     <input
-                                        type="number"
-                                        value={item.quantity}
-                                        onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
+                                        type="text"
+                                        value={item.itemName}
+                                        onChange={(e) => updateItem(item.id, 'itemName', e.target.value)}
                                         className="input text-sm py-2.5"
-                                        placeholder="Quantity"
-                                        inputMode="numeric"
-                                        min="1"
+                                        placeholder="Item name"
                                     />
-                                    <input
-                                        type="number"
-                                        value={item.price}
-                                        onChange={(e) => updateItem(item.id, 'price', e.target.value)}
-                                        className="input text-sm py-2.5"
-                                        placeholder="Price"
-                                        inputMode="decimal"
-                                        min="0"
-                                        step="0.01"
-                                    />
+
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <input
+                                            type="number"
+                                            value={item.quantity}
+                                            onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
+                                            className="input text-sm py-2.5"
+                                            placeholder="Quantity"
+                                            inputMode="numeric"
+                                            min="1"
+                                        />
+                                        <input
+                                            type="number"
+                                            value={item.price}
+                                            onChange={(e) => updateItem(item.id, 'price', e.target.value)}
+                                            className="input text-sm py-2.5"
+                                            placeholder="Price"
+                                            inputMode="decimal"
+                                            min="0"
+                                            step="0.01"
+                                        />
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
-                </div>
 
-                {/* Total Amount */}
-                <div className="card bg-accent/10 border-accent/30">
-                    <div className="flex items-center justify-between">
-                        <span className="text-neutral-300 font-medium">Total Amount</span>
-                        <span className="text-2xl font-bold text-accent">
-                            {formatCurrency(calculateTotal())}
-                        </span>
+                    {/* Total Amount */}
+                    <div className="card bg-accent/10 border-accent/30">
+                        <div className="flex items-center justify-between">
+                            <span className="text-neutral-300 font-medium">Total Amount</span>
+                            <span className="text-2xl font-bold text-accent">
+                                {formatCurrency(calculateTotal())}
+                            </span>
+                        </div>
                     </div>
-                </div>
 
-                {/* Payment Status */}
-                <div>
-                    <label className="block text-sm font-medium text-neutral-300 mb-3">
-                        Payment Status
-                    </label>
-                    <div className="flex gap-3">
-                        <button
-                            type="button"
-                            onClick={() => setIsPaid(true)}
-                            className={`flex-1 py-3 rounded-lg font-medium transition-all ${isPaid
-                                ? 'bg-success text-white'
-                                : 'bg-background-tertiary text-neutral-400 hover:text-neutral-200'
-                                }`}
-                        >
-                            Paid
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setIsPaid(false)}
-                            className={`flex-1 py-3 rounded-lg font-medium transition-all ${!isPaid
-                                ? 'bg-danger text-white'
-                                : 'bg-background-tertiary text-neutral-400 hover:text-neutral-200'
-                                }`}
-                        >
-                            Not Paid
-                        </button>
+                    {/* Payment Status */}
+                    <div>
+                        <label className="block text-sm font-medium text-neutral-300 mb-3">
+                            Payment Status
+                        </label>
+                        <div className="flex gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setIsPaid(true)}
+                                className={`flex-1 py-3 rounded-lg font-medium transition-all ${isPaid
+                                    ? 'bg-success text-white'
+                                    : 'bg-background-tertiary text-neutral-400 hover:text-neutral-200'
+                                    }`}
+                            >
+                                Paid
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setIsPaid(false)}
+                                className={`flex-1 py-3 rounded-lg font-medium transition-all ${!isPaid
+                                    ? 'bg-danger text-white'
+                                    : 'bg-background-tertiary text-neutral-400 hover:text-neutral-200'
+                                    }`}
+                            >
+                                Not Paid
+                            </button>
+                        </div>
                     </div>
-                </div>
 
-                {/* Submit Button */}
-                <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="btn btn-primary w-full py-3.5 text-base"
-                >
-                    {isSubmitting ? (
-                        <>
-                            <Loader2 size={20} className="animate-spin" />
-                            Saving...
-                        </>
-                    ) : (
-                        'Save Auction'
-                    )}
-                </button>
-            </form>
+                    {/* Submit Button */}
+                    <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="btn btn-primary w-full py-3.5 text-base"
+                    >
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 size={20} className="animate-spin" />
+                                Saving...
+                            </>
+                        ) : (
+                            isEditMode ? 'Update Auction' : 'Save Auction'
+                        )}
+                    </button>
+                </form>
+            )}
 
             <Toast
                 message={toast.message}
