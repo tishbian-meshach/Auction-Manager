@@ -3,7 +3,10 @@ import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import dayjs from 'dayjs';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 import type { Auction } from '../api';
+import { isNative } from './platform';
 
 interface ExportFilters {
     filterType: 'all' | 'month' | 'date';
@@ -55,7 +58,50 @@ function formatNumberINR(amount: string | number): string {
     return num.toLocaleString('en-IN', { maximumFractionDigits: 0 });
 }
 
-export function exportToPDF(auctions: Auction[], filters: ExportFilters): void {
+// Share file on native platforms
+async function shareFile(filePath: string, filename: string): Promise<void> {
+    try {
+        await Share.share({
+            title: filename,
+            url: filePath,
+            dialogTitle: `Share ${filename}`,
+        });
+    } catch (error) {
+        console.error('Error sharing file:', error);
+        throw error;
+    }
+}
+
+// Save and share PDF on native
+async function savePDFNative(doc: jsPDF, filename: string): Promise<void> {
+    const pdfOutput = doc.output('datauristring');
+    const base64Data = pdfOutput.split(',')[1];
+
+    const result = await Filesystem.writeFile({
+        path: filename,
+        data: base64Data,
+        directory: Directory.Cache,
+    });
+
+    await shareFile(result.uri, filename);
+}
+
+// Save and share Excel on native
+async function saveExcelNative(data: ArrayBuffer, filename: string): Promise<void> {
+    const base64Data = btoa(
+        new Uint8Array(data).reduce((data, byte) => data + String.fromCharCode(byte), '')
+    );
+
+    const result = await Filesystem.writeFile({
+        path: filename,
+        data: base64Data,
+        directory: Directory.Cache,
+    });
+
+    await shareFile(result.uri, filename);
+}
+
+export async function exportToPDF(auctions: Auction[], filters: ExportFilters): Promise<void> {
     const doc = new jsPDF();
     const filterText = getFilterDescription(filters);
     const exportDate = dayjs().format('DD MMM YYYY, hh:mm A');
@@ -121,10 +167,15 @@ export function exportToPDF(auctions: Auction[], filters: ExportFilters): void {
 
     // Save
     const filename = `auctions_${dayjs().format('YYYY-MM-DD_HHmm')}.pdf`;
-    doc.save(filename);
+
+    if (isNative()) {
+        await savePDFNative(doc, filename);
+    } else {
+        doc.save(filename);
+    }
 }
 
-export function exportToExcel(auctions: Auction[], filters: ExportFilters): void {
+export async function exportToExcel(auctions: Auction[], filters: ExportFilters): Promise<void> {
     const filterText = getFilterDescription(filters);
     const exportDate = dayjs().format('DD MMM YYYY, hh:mm A');
 
@@ -209,7 +260,12 @@ export function exportToExcel(auctions: Auction[], filters: ExportFilters): void
 
     // Generate and save
     const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    const blob = new Blob([wbout], { type: 'application/octet-stream' });
     const filename = `auctions_${dayjs().format('YYYY-MM-DD_HHmm')}.xlsx`;
-    saveAs(blob, filename);
+
+    if (isNative()) {
+        await saveExcelNative(wbout, filename);
+    } else {
+        const blob = new Blob([wbout], { type: 'application/octet-stream' });
+        saveAs(blob, filename);
+    }
 }

@@ -217,24 +217,32 @@ export function AuctionList() {
         return filteredAndGrouped.flatMap(group => group.auctions);
     }, [filteredAndGrouped]);
 
-    const handleExportPDF = () => {
-        exportToPDF(filteredAuctions, {
-            filterType,
-            paymentFilter,
-            selectedMonth,
-            selectedDate,
-            searchQuery,
-        });
+    const handleExportPDF = async () => {
+        try {
+            await exportToPDF(filteredAuctions, {
+                filterType,
+                paymentFilter,
+                selectedMonth,
+                selectedDate,
+                searchQuery,
+            });
+        } catch (error) {
+            console.error('Error exporting PDF:', error);
+        }
     };
 
-    const handleExportExcel = () => {
-        exportToExcel(filteredAuctions, {
-            filterType,
-            paymentFilter,
-            selectedMonth,
-            selectedDate,
-            searchQuery,
-        });
+    const handleExportExcel = async () => {
+        try {
+            await exportToExcel(filteredAuctions, {
+                filterType,
+                paymentFilter,
+                selectedMonth,
+                selectedDate,
+                searchQuery,
+            });
+        } catch (error) {
+            console.error('Error exporting Excel:', error);
+        }
     };
 
     return (

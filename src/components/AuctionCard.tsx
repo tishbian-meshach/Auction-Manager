@@ -24,9 +24,13 @@ export function AuctionCard({ auction, onMarkPaid, isUpdating }: AuctionCardProp
         }
     };
 
-    const handlePrint = (e: React.MouseEvent) => {
+    const handlePrint = async (e: React.MouseEvent) => {
         e.stopPropagation();
-        printBill(auction);
+        try {
+            await printBill(auction);
+        } catch (error) {
+            console.error('Error printing bill:', error);
+        }
     };
 
     return (

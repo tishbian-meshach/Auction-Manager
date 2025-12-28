@@ -1,27 +1,165 @@
 import dayjs from 'dayjs';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 import type { Auction } from '../api';
+import { isNative } from './platform';
 
-export function printBill(auction: Auction): void {
-    // Create a new window for printing
-    const printWindow = window.open('', '_blank', 'width=400,height=600');
+const formatCurrency = (amount: string | number): string => {
+  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0,
+  }).format(num);
+};
 
-    if (!printWindow) {
-        alert('Please allow popups to print the bill');
-        return;
-    }
+// Format number for PDF (Rs. prefix, no rupee symbol)
+const formatNumberINR = (amount: string | number): string => {
+  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+  return `Rs.${num.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+};
 
-    const formatCurrency = (amount: string | number): string => {
-        const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-        return new Intl.NumberFormat('en-IN', {
-            style: 'currency',
-            currency: 'INR',
-            maximumFractionDigits: 0,
-        }).format(num);
-    };
+// Generate PDF bill
+function generateBillPDF(auction: Auction): jsPDF {
+  const doc = new jsPDF({
+    unit: 'mm',
+    format: [80, 150] // Receipt-style format
+  });
 
-    const itemsRows = auction.items.map((item, index) => {
-        const itemTotal = item.quantity * parseFloat(String(item.price));
-        return `
+  const pageWidth = 80;
+  const margin = 5;
+  let y = 10;
+
+  // Header
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('AUCTION BILL', pageWidth / 2, y, { align: 'center' });
+  y += 6;
+
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Invoice / Bill of Sale', pageWidth / 2, y, { align: 'center' });
+  y += 8;
+
+  // Divider
+  doc.setLineWidth(0.5);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 5;
+
+  // Customer Info
+  doc.setFontSize(9);
+  doc.text(`Customer: ${auction.personName}`, margin, y);
+  y += 5;
+  doc.text(`Mobile: ${auction.mobileNumber}`, margin, y);
+  y += 5;
+  doc.text(`Date: ${dayjs(auction.auctionDate).format('DD MMM YYYY')}`, margin, y);
+  y += 5;
+  doc.text(`Status: ${auction.isPaid ? 'PAID' : 'UNPAID'}`, margin, y);
+  y += 8;
+
+  // Items table
+  const tableData = auction.items.map((item, index) => [
+    (index + 1).toString(),
+    item.itemName.substring(0, 15),
+    item.quantity.toString(),
+    formatNumberINR(item.price),
+    formatNumberINR(item.quantity * parseFloat(String(item.price))),
+  ]);
+
+  autoTable(doc, {
+    head: [['#', 'Item', 'Qty', 'Price', 'Total']],
+    body: tableData,
+    startY: y,
+    margin: { left: margin, right: margin },
+    styles: {
+      fontSize: 7,
+      cellPadding: 1.5,
+      font: 'helvetica',
+    },
+    headStyles: {
+      fillColor: [50, 50, 50],
+      textColor: 255,
+      fontStyle: 'bold',
+    },
+    columnStyles: {
+      0: { cellWidth: 6, halign: 'center' },
+      1: { cellWidth: 25 },
+      2: { cellWidth: 10, halign: 'center' },
+      3: { cellWidth: 15, halign: 'right' },
+      4: { cellWidth: 15, halign: 'right' },
+    },
+  });
+
+  // Get final Y position after table
+  y = (doc as any).lastAutoTable.finalY + 5;
+
+  // Total
+  doc.setLineWidth(0.5);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 5;
+
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text('TOTAL:', margin, y);
+  doc.text(formatNumberINR(auction.totalAmount), pageWidth - margin, y, { align: 'right' });
+  y += 8;
+
+  // Footer
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(100);
+  doc.text('Thank you for your business!', pageWidth / 2, y, { align: 'center' });
+  y += 4;
+  doc.text(`Generated: ${dayjs().format('DD MMM YYYY, hh:mm A')}`, pageWidth / 2, y, { align: 'center' });
+
+  return doc;
+}
+
+// Share PDF on native
+async function sharePDFNative(doc: jsPDF, filename: string): Promise<void> {
+  const pdfOutput = doc.output('datauristring');
+  const base64Data = pdfOutput.split(',')[1];
+
+  const result = await Filesystem.writeFile({
+    path: filename,
+    data: base64Data,
+    directory: Directory.Cache,
+  });
+
+  await Share.share({
+    title: filename,
+    url: result.uri,
+    dialogTitle: 'Share Bill',
+  });
+}
+
+// Print bill using popup window (web) or PDF share (native)
+export async function printBill(auction: Auction): Promise<void> {
+  if (isNative()) {
+    // On native platform, generate PDF and share
+    const doc = generateBillPDF(auction);
+    const filename = `bill_${auction.personName.replace(/\s+/g, '_')}_${dayjs().format('YYYYMMDD_HHmm')}.pdf`;
+    await sharePDFNative(doc, filename);
+  } else {
+    // On web, use popup window (existing behavior)
+    printBillWeb(auction);
+  }
+}
+
+// Original web-based print function
+function printBillWeb(auction: Auction): void {
+  const printWindow = window.open('', '_blank', 'width=400,height=600');
+
+  if (!printWindow) {
+    alert('Please allow popups to print the bill');
+    return;
+  }
+
+  const itemsRows = auction.items.map((item, index) => {
+    const itemTotal = item.quantity * parseFloat(String(item.price));
+    return `
       <tr>
         <td style="padding: 8px; border-bottom: 1px solid #eee;">${index + 1}</td>
         <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.itemName}</td>
@@ -30,9 +168,9 @@ export function printBill(auction: Auction): void {
         <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${formatCurrency(itemTotal)}</td>
       </tr>
     `;
-    }).join('');
+  }).join('');
 
-    const billHTML = `
+  const billHTML = `
     <!DOCTYPE html>
     <html>
     <head>
@@ -244,6 +382,6 @@ export function printBill(auction: Auction): void {
     </html>
   `;
 
-    printWindow.document.write(billHTML);
-    printWindow.document.close();
+  printWindow.document.write(billHTML);
+  printWindow.document.close();
 }
