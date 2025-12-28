@@ -1,5 +1,6 @@
-// For mobile builds, always use the production API URL
-const API_BASE_URL = 'https://auction-manager-ten.vercel.app';
+// Use relative paths for web (works with Vite proxy), production URL for mobile (Capacitor)
+const isNativeApp = typeof (window as any).Capacitor !== 'undefined';
+const API_BASE_URL = isNativeApp ? 'https://auction-manager-ten.vercel.app' : '';
 
 export interface AuctionItem {
     id?: string;
