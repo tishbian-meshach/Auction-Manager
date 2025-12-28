@@ -125,7 +125,7 @@ app.post('/api/auctions', async (req, res) => {
         const [newAuction] = await db.insert(auctions).values({
             personName,
             mobileNumber,
-            auctionDate: new Date(auctionDate),
+            auctionDate: String(auctionDate).split('T')[0],
             totalAmount: totalAmount.toFixed(2),
             isPaid: isPaid || false,
         }).returning();
