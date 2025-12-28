@@ -44,7 +44,12 @@ const db = drizzle(sqlClient, {
 // Express app
 const app = express();
 
-app.use(cors());
+// Allow all origins for mobile app (Capacitor) support
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 app.use(express.json());
 
 // Request logger
