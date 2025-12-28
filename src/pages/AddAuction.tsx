@@ -43,9 +43,8 @@ export function AddAuction() {
 
     const calculateTotal = () => {
         return items.reduce((sum, item) => {
-            const quantity = parseFloat(item.quantity) || 0;
             const price = parseFloat(item.price) || 0;
-            return sum + quantity * price;
+            return sum + price;
         }, 0);
     };
 

@@ -68,7 +68,7 @@ function generateBillPDF(auction: Auction): jsPDF {
     item.itemName.substring(0, 15),
     item.quantity.toString(),
     formatNumberINR(item.price),
-    formatNumberINR(item.quantity * parseFloat(String(item.price))),
+    formatNumberINR(parseFloat(String(item.price))),
   ]);
 
   autoTable(doc, {
@@ -161,7 +161,7 @@ function printBillWeb(auction: Auction): void {
   }
 
   const itemsRows = auction.items.map((item, index) => {
-    const itemTotal = item.quantity * parseFloat(String(item.price));
+    const itemTotal = parseFloat(String(item.price));
     return `
       <tr>
         <td style="padding: 8px; border-bottom: 1px solid #eee;">${index + 1}</td>

@@ -221,8 +221,8 @@ export async function exportToExcel(auctions: Auction[], filters: ExportFilters)
                 auction.personName,
                 item.itemName,
                 item.quantity.toString(),
-                parseFloat(String(item.price)).toString(),
-                (item.quantity * parseFloat(String(item.price))).toString(),
+                item.price.toString(),
+                item.price.toString(),
             ]);
         });
     });

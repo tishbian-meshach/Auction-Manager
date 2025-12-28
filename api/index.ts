@@ -118,7 +118,7 @@ app.post('/api/auctions', async (req, res) => {
         }
 
         const totalAmount = items.reduce((sum: number, item: { quantity: number; price: number }) =>
-            sum + (item.quantity * item.price), 0
+            sum + parseFloat(String(item.price)), 0
         );
 
         console.log('Inserting auction...');

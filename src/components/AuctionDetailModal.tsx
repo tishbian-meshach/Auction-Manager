@@ -89,7 +89,7 @@ export function AuctionDetailModal({
 
                         <div className="space-y-2">
                             {auction.items.map((item, index) => {
-                                const itemTotal = item.quantity * parseFloat(String(item.price));
+                                const itemTotal = parseFloat(String(item.price));
                                 return (
                                     <div
                                         key={item.id || index}
@@ -100,7 +100,7 @@ export function AuctionDetailModal({
                                                 {item.itemName}
                                             </p>
                                             <p className="text-xs text-neutral-500">
-                                                {item.quantity} x ₹{parseFloat(String(item.price)).toLocaleString('en-IN')}
+                                                Quantity: {item.quantity}
                                             </p>
                                         </div>
                                         <p className="font-semibold text-neutral-200 ml-3">
