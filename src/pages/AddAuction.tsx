@@ -209,7 +209,10 @@ export function AddAuction() {
 
     return (
         <div className="min-h-screen pb-24 px-4 pt-6" style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}>
-            <h1 className="text-2xl font-bold text-neutral-100 mb-6">{isEditMode ? 'Edit Auction' : 'Add Auction'}</h1>
+            <div className="mb-6">
+                <p className="text-sm font-medium text-accent mb-1">St.John's Cathedral Nazareth</p>
+                <h1 className="text-2xl font-bold text-neutral-100">{isEditMode ? 'Edit Auction' : 'Add Auction'}</h1>
+            </div>
 
             {isLoadingAuction ? (
                 <div className="flex items-center justify-center py-12">

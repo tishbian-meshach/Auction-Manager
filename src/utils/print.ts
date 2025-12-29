@@ -35,7 +35,7 @@ function generateBillPDF(auction: Auction): jsPDF {
   // Header
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
-  doc.text("St.John's cathedral Nazareth", pageWidth / 2, y, { align: 'center' });
+  doc.text("St.John's Cathedral Nazareth", pageWidth / 2, y, { align: 'center' });
   y += 6;
   doc.setFontSize(10);
   doc.text('AUCTION BILL', pageWidth / 2, y, { align: 'center' });
@@ -297,7 +297,7 @@ function printBillWeb(auction: Auction): void {
     </head>
     <body>
       <div class="header">
-        <h1>St.John's cathedral Nazareth</h1>
+        <h1>St.John's Cathedral Nazareth</h1>
         <p>AUCTION BILL</p>
         <p>Invoice / Bill of Sale</p>
       </div>
