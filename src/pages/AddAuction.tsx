@@ -136,6 +136,7 @@ export function AddAuction() {
             const payload: CreateAuctionPayload = {
                 personName: personName.trim(),
                 mobileNumber: mobileNumber.trim(),
+                streetName: streetName.trim() || undefined,
                 auctionDate,
                 isPaid,
                 items: items
@@ -180,6 +181,7 @@ export function AddAuction() {
             const payload: CreateAuctionPayload = {
                 personName: personName.trim(),
                 mobileNumber: mobileNumber.trim(),
+                streetName: streetName.trim() || undefined,
                 auctionDate,
                 isPaid,
                 items: items
