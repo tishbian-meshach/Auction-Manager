@@ -297,7 +297,7 @@ function printBillWeb(auction: Auction): void {
     </head>
     <body>
       <div class="header">
-        <h1>ST.JOHN'S CHURCH</h1>
+        <h1>St.John's cathedral Nazareth</h1>
         <p>AUCTION BILL</p>
         <p>Invoice / Bill of Sale</p>
       </div>
