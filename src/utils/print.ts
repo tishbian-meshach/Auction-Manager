@@ -35,7 +35,7 @@ function generateBillPDF(auction: Auction): jsPDF {
   // Header
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
-  doc.text("ST.JOHN'S CHURCH", pageWidth / 2, y, { align: 'center' });
+  doc.text("St.John's cathedral Nazareth", pageWidth / 2, y, { align: 'center' });
   y += 6;
   doc.setFontSize(10);
   doc.text('AUCTION BILL', pageWidth / 2, y, { align: 'center' });
