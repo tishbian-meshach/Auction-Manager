@@ -211,7 +211,7 @@ export async function exportToExcel(auctions: Auction[], filters: ExportFilters)
     const itemsData = [
         ['AUCTION ITEMS DETAIL'],
         [],
-        ['Auction ID', 'Person Name', 'Item Name', 'Quantity', 'Price', 'Item Total'],
+        ['Auction ID', 'Person Name', 'Mobile', 'Street', 'Item Name', 'Quantity', 'Price', 'Item Total'],
     ];
 
     auctions.forEach((auction) => {
@@ -219,6 +219,8 @@ export async function exportToExcel(auctions: Auction[], filters: ExportFilters)
             itemsData.push([
                 auction.id.slice(0, 8),
                 auction.personName,
+                auction.mobileNumber,
+                auction.streetName || '-',
                 item.itemName,
                 item.quantity.toString(),
                 item.price.toString(),

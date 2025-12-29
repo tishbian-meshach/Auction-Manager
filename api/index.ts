@@ -10,6 +10,7 @@ export const auctions = pgTable('auctions', {
     id: uuid('id').defaultRandom().primaryKey(),
     personName: text('person_name').notNull(),
     mobileNumber: text('mobile_number').notNull(),
+    streetName: text('street_name'),
     auctionDate: date('auction_date').notNull(),
     totalAmount: decimal('total_amount', { precision: 10, scale: 2 }).notNull(),
     isPaid: boolean('is_paid').default(false).notNull(),
@@ -109,7 +110,7 @@ app.post('/api/auctions', async (req, res) => {
     try {
         console.log('POST /api/auctions - Request body:', JSON.stringify(req.body));
 
-        const { personName, mobileNumber, auctionDate, items, isPaid } = req.body;
+        const { personName, mobileNumber, streetName, auctionDate, items, isPaid } = req.body;
 
         if (!personName || !mobileNumber || !auctionDate || !items || items.length === 0) {
             return res.status(400).json({
@@ -125,6 +126,7 @@ app.post('/api/auctions', async (req, res) => {
         const [newAuction] = await db.insert(auctions).values({
             personName,
             mobileNumber,
+            streetName: streetName || null,
             auctionDate: String(auctionDate).split('T')[0],
             totalAmount: totalAmount.toFixed(2),
             isPaid: isPaid || false,
@@ -204,7 +206,7 @@ app.delete('/api/auctions/:id', async (req, res) => {
 app.put('/api/auctions/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { personName, mobileNumber, auctionDate, items, isPaid } = req.body;
+        const { personName, mobileNumber, streetName, auctionDate, items, isPaid } = req.body;
 
         if (!personName || !mobileNumber || !auctionDate || !items || items.length === 0) {
             return res.status(400).json({ error: 'Missing required fields' });
@@ -221,6 +223,7 @@ app.put('/api/auctions/:id', async (req, res) => {
             .set({
                 personName,
                 mobileNumber,
+                streetName: streetName || null,
                 auctionDate: String(auctionDate).split('T')[0],
                 totalAmount: totalAmount.toFixed(2),
                 isPaid: isPaid || false,

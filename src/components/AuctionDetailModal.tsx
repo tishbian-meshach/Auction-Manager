@@ -71,6 +71,18 @@ export function AuctionDetailModal({
                             </div>
                         </div>
 
+                        {auction.streetName && (
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-amber-500/20 rounded-full flex items-center justify-center">
+                                    <Package size={20} className="text-amber-400" />
+                                </div>
+                                <div>
+                                    <p className="text-sm text-neutral-500">Street Name</p>
+                                    <p className="font-semibold text-neutral-100">{auction.streetName}</p>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-purple-500/20 rounded-full flex items-center justify-center">
                                 <Calendar size={20} className="text-purple-400" />

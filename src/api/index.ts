@@ -14,6 +14,7 @@ export interface Auction {
     id: string;
     personName: string;
     mobileNumber: string;
+    streetName: string | null;
     auctionDate: string;
     totalAmount: string;
     isPaid: boolean;
@@ -24,6 +25,7 @@ export interface Auction {
 export interface CreateAuctionPayload {
     personName: string;
     mobileNumber: string;
+    streetName?: string;
     auctionDate: string;
     items: Omit<AuctionItem, 'id' | 'auctionId'>[];
     isPaid: boolean;

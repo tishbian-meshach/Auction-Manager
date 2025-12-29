@@ -23,6 +23,7 @@ export function AddAuction() {
 
     const [personName, setPersonName] = useState('');
     const [mobileNumber, setMobileNumber] = useState('');
+    const [streetName, setStreetName] = useState('');
     const [auctionDate, setAuctionDate] = useState(dayjs().format('YYYY-MM-DD'));
     const [isPaid, setIsPaid] = useState(false);
     const [items, setItems] = useState<ItemInput[]>([
@@ -42,6 +43,7 @@ export function AddAuction() {
                 if (auction) {
                     setPersonName(auction.personName);
                     setMobileNumber(auction.mobileNumber);
+                    setStreetName(auction.streetName || '');
                     setAuctionDate(dayjs(auction.auctionDate).format('YYYY-MM-DD'));
                     setIsPaid(auction.isPaid);
                     setItems(
@@ -155,6 +157,7 @@ export function AddAuction() {
             // Reset form
             setPersonName('');
             setMobileNumber('');
+            setStreetName('');
             setAuctionDate(dayjs().format('YYYY-MM-DD'));
             setIsPaid(false);
             setItems([{ id: generateId(), itemName: '', quantity: '', price: '' }]);
@@ -245,6 +248,20 @@ export function AddAuction() {
                         {errors.mobileNumber && (
                             <p className="text-sm text-danger mt-1">{errors.mobileNumber}</p>
                         )}
+                    </div>
+
+                    {/* Street Name */}
+                    <div>
+                        <label className="block text-sm font-medium text-neutral-300 mb-2">
+                            Street Name
+                        </label>
+                        <input
+                            type="text"
+                            value={streetName}
+                            onChange={(e) => setStreetName(e.target.value)}
+                            className="input"
+                            placeholder="Enter street name (optional)"
+                        />
                     </div>
 
                     {/* Auction Date - Custom DatePicker */}

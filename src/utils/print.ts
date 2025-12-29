@@ -57,6 +57,10 @@ function generateBillPDF(auction: Auction): jsPDF {
   y += 5;
   doc.text(`Mobile: ${auction.mobileNumber}`, margin, y);
   y += 5;
+  if (auction.streetName) {
+    doc.text(`Street: ${auction.streetName}`, margin, y);
+    y += 5;
+  }
   doc.text(`Date: ${dayjs(auction.auctionDate).format('DD MMM YYYY')}`, margin, y);
   y += 5;
   doc.text(`Status: ${auction.isPaid ? 'PAID' : 'UNPAID'}`, margin, y);
@@ -307,6 +311,12 @@ function printBillWeb(auction: Auction): void {
           <span class="info-label">Mobile:</span>
           <span class="info-value">${auction.mobileNumber}</span>
         </div>
+        ${auction.streetName ? `
+        <div class="info-row">
+          <span class="info-label">Street:</span>
+          <span class="info-value">${auction.streetName}</span>
+        </div>
+        ` : ''}
         <div class="info-row">
           <span class="info-label">Date:</span>
           <span class="info-value">${dayjs(auction.auctionDate).format('DD MMM YYYY')}</span>
