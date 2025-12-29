@@ -5,6 +5,7 @@ export const auctions = pgTable('auctions', {
     id: uuid('id').primaryKey().defaultRandom(),
     personName: varchar('person_name', { length: 255 }).notNull(),
     mobileNumber: varchar('mobile_number', { length: 20 }).notNull(),
+    streetName: varchar('street_name', { length: 255 }),
     auctionDate: date('auction_date').notNull(),
     totalAmount: decimal('total_amount', { precision: 12, scale: 2 }).notNull().default('0'),
     isPaid: boolean('is_paid').notNull().default(false),
