@@ -1,5 +1,3 @@
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import dayjs from 'dayjs';
@@ -7,7 +5,6 @@ import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import type { Auction } from '../api';
 import { isNative } from './platform';
-import { setupPdfFont } from './fontLoader';
 
 interface ExportFilters {
     filterType: 'all' | 'month' | 'date';
@@ -73,19 +70,6 @@ async function shareFile(filePath: string, filename: string): Promise<void> {
     }
 }
 
-// Save and share PDF on native
-async function savePDFNative(doc: jsPDF, filename: string): Promise<void> {
-    const pdfOutput = doc.output('datauristring');
-    const base64Data = pdfOutput.split(',')[1];
-
-    const result = await Filesystem.writeFile({
-        path: filename,
-        data: base64Data,
-        directory: Directory.Cache,
-    });
-
-    await shareFile(result.uri, filename);
-}
 
 // Save and share Excel on native
 async function saveExcelNative(data: ArrayBuffer, filename: string): Promise<void> {
@@ -103,95 +87,26 @@ async function saveExcelNative(data: ArrayBuffer, filename: string): Promise<voi
 }
 
 export async function exportToPDF(auctions: Auction[], filters: ExportFilters): Promise<void> {
-    // If running on Web, use HTML print popup for proper Tamil/Unicode rendering
-    if (!isNative()) {
-        exportToPDFWeb(auctions, filters);
-        return;
+    const html = generateReportHTML(auctions, filters);
+
+    if (isNative()) {
+        const payload = btoa(unescape(encodeURIComponent(html)));
+        window.open(`https://auction-manager-ten.vercel.app/print.html#${payload}`, '_system');
+    } else {
+        const printWindow = window.open('', '_blank', 'width=800,height=600');
+        if (printWindow) {
+            printWindow.document.write(html);
+            printWindow.document.close();
+        } else {
+            alert('Please allow popups to print the report');
+        }
     }
-
-    const doc = new jsPDF();
-    
-    // Inject the Tamil TTF font into jsPDF instance for Native PDF generation
-    await setupPdfFont(doc);
-    
-    const filterText = getFilterDescription(filters);
-    const exportDate = dayjs().format('DD MMM YYYY, hh:mm A');
-
-    // Title
-    doc.setFontSize(18);
-    doc.setFont('NotoSansTamil', 'bold');
-    doc.text('Auction Report', 14, 20);
-
-    // Filters applied
-    doc.setFontSize(10);
-    doc.setFont('NotoSansTamil', 'normal');
-    doc.setTextColor(100);
-    doc.text(`Filters: ${filterText}`, 14, 28);
-    doc.text(`Exported on: ${exportDate}`, 14, 34);
-    doc.text(`Total Records: ${auctions.length}`, 14, 40);
-
-    // Calculate totals
-    const totalAmount = auctions.reduce((sum, a) => sum + parseFloat(a.totalAmount), 0);
-    const paidAmount = auctions.filter(a => a.isPaid).reduce((sum, a) => sum + parseFloat(a.totalAmount), 0);
-    const unpaidAmount = auctions.filter(a => !a.isPaid).reduce((sum, a) => sum + parseFloat(a.totalAmount), 0);
-
-    doc.text(`Total: Rs.${formatNumberINR(totalAmount)} | Paid: Rs.${formatNumberINR(paidAmount)} | Unpaid: Rs.${formatNumberINR(unpaidAmount)}`, 14, 46);
-
-    // Table data - using plain number format
-    const tableData = auctions.map((auction, index) => [
-        (index + 1).toString(),
-        auction.personName,
-        auction.mobileNumber,
-        dayjs(auction.auctionDate).format('DD MMM YYYY'),
-        auction.items.length.toString(),
-        `Rs.${formatNumberINR(auction.totalAmount)}`,
-        auction.isPaid ? 'Paid' : 'Not Paid',
-    ]);
-
-    autoTable(doc, {
-        head: [['#', 'Person Name', 'Mobile', 'Date', 'Items', 'Amount (Rs.)', 'Status']],
-        body: tableData,
-        startY: 52,
-        styles: {
-            fontSize: 9,
-            cellPadding: 3,
-            font: 'NotoSansTamil',
-        },
-        headStyles: {
-            fillColor: [59, 130, 246],
-            textColor: 255,
-            fontStyle: 'bold',
-        },
-        columnStyles: {
-            0: { cellWidth: 12, halign: 'center' },
-            1: { cellWidth: 38 },
-            2: { cellWidth: 28 },
-            3: { cellWidth: 28 },
-            4: { cellWidth: 15, halign: 'center' },
-            5: { cellWidth: 32, halign: 'right' },
-            6: { cellWidth: 22, halign: 'center' },
-        },
-        alternateRowStyles: {
-            fillColor: [245, 247, 250],
-        },
-    });
-
-    // Save
-    const filename = `auctions_${dayjs().format('YYYY-MM-DD_HHmm')}.pdf`;
-
-    await savePDFNative(doc, filename);
 }
 
-// Helper to generate Web PDF via Print Popup to support Unicode languages like Tamil natively
-function exportToPDFWeb(auctions: Auction[], filters: ExportFilters): void {
+// Generates the HTML string
+function generateReportHTML(auctions: Auction[], filters: ExportFilters): string {
     const filterText = getFilterDescription(filters);
     const exportDate = dayjs().format('DD MMM YYYY, hh:mm A');
-
-    const printWindow = window.open('', '_blank', 'width=800,height=600');
-    if (!printWindow) {
-        alert('Please allow popups to print the report');
-        return;
-    }
 
     const totalAmount = auctions.reduce((sum, a) => sum + parseFloat(a.totalAmount), 0);
     const paidAmount = auctions.filter(a => a.isPaid).reduce((sum, a) => sum + parseFloat(a.totalAmount), 0);
@@ -274,8 +189,8 @@ function exportToPDFWeb(auctions: Auction[], filters: ExportFilters): void {
     </body>
     </html>
     `;
-    printWindow.document.write(html);
-    printWindow.document.close();
+    
+    return html;
 }
 
 export async function exportToExcel(auctions: Auction[], filters: ExportFilters): Promise<void> {

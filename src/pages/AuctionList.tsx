@@ -87,11 +87,8 @@ export function AuctionList() {
     useEffect(() => {
         fetchAuctions();
 
-        const listener = network.addListener((connected) => {
-            setIsOffline(!connected);
-            if (connected) {
-                fetchAuctions();
-            }
+        const listener = network.addListener((statusConnected) => {
+            setIsOffline(!statusConnected);
         });
 
         return () => {

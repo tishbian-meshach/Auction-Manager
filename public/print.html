@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Print - Auction Manager</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; color: #333; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f0f0f0; }
+    .loader { text-align: center; font-size: 18px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="loader">Preparing Document for Print...</div>
+  <script>
+    window.onload = () => {
+      try {
+        const hash = window.location.hash;
+        if (hash && hash.length > 1) {
+          // Remove the # and decode the base64 payload
+          const b64Data = hash.substring(1);
+          // Safely decode unicode base64 back to HTML string
+          const htmlContent = decodeURIComponent(escape(atob(b64Data)));
+          
+          document.open();
+          document.write(htmlContent);
+          document.close();
+        } else {
+          document.body.innerHTML = '<div class="loader">No print data provided.</div>';
+        }
+      } catch (err) {
+        console.error(err);
+        document.body.innerHTML = '<div class="loader">Error processing print data. Make sure link is valid.</div>';
+      }
+    };
+  </script>
+</body>
+</html>
