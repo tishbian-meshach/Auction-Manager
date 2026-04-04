@@ -58,10 +58,6 @@ input[type="number"] {
 /* Pull to Refresh Styles */
 .pull-to-refresh-container {
   position: relative;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  height: 100%;
-  overscroll-behavior-y: contain;
 }
 
 .pull-to-refresh-indicator {

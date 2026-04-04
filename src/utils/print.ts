@@ -62,8 +62,20 @@ function generateBillPDF(auction: Auction): jsPDF {
     y += 5;
   }
   doc.text(`Date: ${dayjs(auction.auctionDate).format('DD MMM YYYY')}`, margin, y);
-  y += 5;
+  y += 7;
+  
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  if (auction.isPaid) {
+    doc.setTextColor(22, 101, 52); // Dark green
+  } else {
+    doc.setTextColor(220, 38, 38); // Dark red
+  }
   doc.text(`Status: ${auction.isPaid ? 'PAID' : 'UNPAID'}`, margin, y);
+  doc.setTextColor(0); // Reset to black
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  
   y += 8;
 
   // Items table
@@ -264,10 +276,11 @@ function printBillWeb(auction: Auction): void {
         }
         .status-badge {
           display: inline-block;
-          padding: 4px 12px;
+          padding: 6px 16px;
           border-radius: 20px;
-          font-size: 12px;
-          font-weight: 600;
+          font-size: 16px;
+          font-weight: 800;
+          letter-spacing: 0.5px;
         }
         .status-paid {
           background: #dcfce7;

@@ -20,8 +20,11 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
     const MAX_PULL_DISTANCE = 120;
 
     const handleTouchStart = (e: React.TouchEvent) => {
-        // Only allow pull to refresh if we are at the top of the container
-        if (containerRef.current && containerRef.current.scrollTop === 0) {
+        // Find the actual scroll position by checking both the container and the window
+        const scrollTop = containerRef.current?.scrollTop || window.scrollY || document.documentElement.scrollTop || 0;
+        
+        // Only allow pull to refresh if we are at the top
+        if (scrollTop <= 0) {
             startY.current = e.touches[0].pageY;
             setIsPulling(true);
         }

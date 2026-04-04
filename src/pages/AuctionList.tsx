@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, WifiOff, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, WifiOff, Calendar, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import dayjs from 'dayjs';
 import { api, type Auction } from '../api';
 import { AuctionCard } from '../components/AuctionCard';
@@ -13,7 +13,6 @@ import { Toast } from '../components/Toast';
 import { useToast } from '../hooks/useToast';
 import { storage, network } from '../utils/storage';
 import { exportToPDF, exportToExcel } from '../utils/export';
-import { PullToRefresh } from '../components/PullToRefresh';
 
 type FilterType = 'all' | 'month' | 'date';
 type PaymentFilter = 'all' | 'paid' | 'unpaid';
@@ -301,24 +300,31 @@ export function AuctionList() {
 
     return (
         <>
-            <PullToRefresh onRefresh={handleRefresh} refreshing={isRefreshing}>
-                <div className="min-h-screen pb-24 px-4 pt-6" style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}>
-                    <div className="flex items-center justify-between mb-4">
-                        <h1 className="text-2xl font-bold text-neutral-100">Auctions</h1>
-                        <div className="flex items-center gap-2">
-                            <ExportMenu
-                                onExportPDF={handleExportPDF}
-                                onExportExcel={handleExportExcel}
-                                disabled={filteredAuctions.length === 0}
-                            />
-                            {isOffline && (
-                                <div className="flex items-center gap-1.5 text-amber-400">
-                                    <WifiOff size={16} />
-                                    <span className="text-xs font-medium">Offline</span>
-                                </div>
-                            )}
-                        </div>
+            <div className="min-h-screen pb-24 px-4 pt-6" style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}>
+                <div className="flex items-center justify-between mb-4">
+                    <h1 className="text-2xl font-bold text-neutral-100">Auctions</h1>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={handleRefresh}
+                            disabled={isRefreshing}
+                            className="p-2 text-neutral-300 hover:text-white bg-background-secondary rounded-lg border border-neutral-700 transition-colors"
+                            aria-label="Refresh auctions"
+                        >
+                            <RefreshCw size={18} className={isRefreshing ? 'animate-spin' : ''} />
+                        </button>
+                        <ExportMenu
+                            onExportPDF={handleExportPDF}
+                            onExportExcel={handleExportExcel}
+                            disabled={filteredAuctions.length === 0}
+                        />
+                        {isOffline && (
+                            <div className="flex items-center gap-1.5 text-amber-400">
+                                <WifiOff size={16} />
+                                <span className="text-xs font-medium">Offline</span>
+                            </div>
+                        )}
                     </div>
+                </div>
 
                     {/* Search */}
                     <div className="relative mb-4">
@@ -547,8 +553,7 @@ export function AuctionList() {
                             ))}
                         </div>
                     )}
-                </div>
-            </PullToRefresh>
+            </div>
 
             {/* Auction Detail Modal */}
             <AuctionDetailModal

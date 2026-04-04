@@ -102,6 +102,12 @@ async function saveExcelNative(data: ArrayBuffer, filename: string): Promise<voi
 }
 
 export async function exportToPDF(auctions: Auction[], filters: ExportFilters): Promise<void> {
+    // If running on Web, use HTML print popup for proper Tamil/Unicode rendering
+    if (!isNative()) {
+        exportToPDFWeb(auctions, filters);
+        return;
+    }
+
     const doc = new jsPDF();
     const filterText = getFilterDescription(filters);
     const exportDate = dayjs().format('DD MMM YYYY, hh:mm A');
@@ -168,11 +174,103 @@ export async function exportToPDF(auctions: Auction[], filters: ExportFilters): 
     // Save
     const filename = `auctions_${dayjs().format('YYYY-MM-DD_HHmm')}.pdf`;
 
-    if (isNative()) {
-        await savePDFNative(doc, filename);
-    } else {
-        doc.save(filename);
+    await savePDFNative(doc, filename);
+}
+
+// Helper to generate Web PDF via Print Popup to support Unicode languages like Tamil natively
+function exportToPDFWeb(auctions: Auction[], filters: ExportFilters): void {
+    const filterText = getFilterDescription(filters);
+    const exportDate = dayjs().format('DD MMM YYYY, hh:mm A');
+
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    if (!printWindow) {
+        alert('Please allow popups to print the report');
+        return;
     }
+
+    const totalAmount = auctions.reduce((sum, a) => sum + parseFloat(a.totalAmount), 0);
+    const paidAmount = auctions.filter(a => a.isPaid).reduce((sum, a) => sum + parseFloat(a.totalAmount), 0);
+    const unpaidAmount = auctions.filter(a => !a.isPaid).reduce((sum, a) => sum + parseFloat(a.totalAmount), 0);
+
+    const rows = auctions.map((auction, index) => {
+        return `
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${index + 1}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee;">${auction.personName}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee;">${auction.mobileNumber}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee;">${dayjs(auction.auctionDate).format('DD MMM YYYY')}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${auction.items.length}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">Rs.${formatNumberINR(auction.totalAmount)}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">
+                    <span class="status-badge ${auction.isPaid ? 'status-paid' : 'status-unpaid'}">
+                        ${auction.isPaid ? 'Paid' : 'Not Paid'}
+                    </span>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Auction Report</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; color: #333; }
+        .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 15px; }
+        .header h1 { font-size: 24px; margin-bottom: 5px; }
+        .info { margin-bottom: 15px; padding: 15px; background: #f9f9f9; border-radius: 5px; }
+        .info p { margin-bottom: 5px; font-size: 13px; }
+        .summary p { margin-bottom: 5px; font-size: 14px; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 12px; }
+        th { background: #3b82f6; color: white; padding: 10px 8px; text-align: left; }
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .status-paid { background: #dcfce7; color: #166534; }
+        .status-unpaid { background: #fee2e2; color: #dc2626; }
+        @media print { body { padding: 10px; } .no-print { display: none; } }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1>Auction Report</h1>
+      </div>
+      <div class="info">
+        <p><strong>Filters:</strong> ${filterText}</p>
+        <p><strong>Exported on:</strong> ${exportDate}</p>
+        <p><strong>Total Records:</strong> ${auctions.length}</p>
+      </div>
+      <div class="info summary">
+        <p>Total: Rs.${formatNumberINR(totalAmount)} | Paid: Rs.${formatNumberINR(paidAmount)} | Unpaid: Rs.${formatNumberINR(unpaidAmount)}</p>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th style="text-align: center;">#</th>
+            <th>Person Name</th>
+            <th>Mobile</th>
+            <th>Date</th>
+            <th style="text-align: center;">Items</th>
+            <th style="text-align: right;">Amount (Rs.)</th>
+            <th style="text-align: center;">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+      </table>
+      <div class="no-print" style="text-align: center; margin-top: 20px;">
+        <button onclick="window.print()" style="padding: 12px 30px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer;">Print Report</button>
+        <button onclick="window.close()" style="padding: 12px 30px; background: #6b7280; color: white; border: none; border-radius: 8px; cursor: pointer; margin-left: 10px;">Close</button>
+      </div>
+      <script>
+        setTimeout(() => { window.print(); }, 500);
+      </script>
+    </body>
+    </html>
+    `;
+    printWindow.document.write(html);
+    printWindow.document.close();
 }
 
 export async function exportToExcel(auctions: Auction[], filters: ExportFilters): Promise<void> {

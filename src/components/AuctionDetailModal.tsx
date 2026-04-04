@@ -141,7 +141,7 @@ export function AuctionDetailModal({
                         <div className="flex items-center justify-between pt-3 border-t border-accent/20">
                             <span className="text-neutral-400">Payment Status</span>
                             <span
-                                className={`badge ${auction.isPaid ? 'badge-success' : 'badge-danger'
+                                className={`px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wider ${auction.isPaid ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'
                                     }`}
                             >
                                 {auction.isPaid ? 'Paid' : 'Not Paid'}
