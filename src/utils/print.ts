@@ -5,6 +5,7 @@ import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import type { Auction } from '../api';
 import { isNative } from './platform';
+import { setupPdfFont } from './fontLoader';
 
 const formatCurrency = (amount: string | number): string => {
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
@@ -22,7 +23,7 @@ const formatNumberINR = (amount: string | number): string => {
 };
 
 // Generate PDF bill
-function generateBillPDF(auction: Auction): jsPDF {
+async function generateBillPDF(auction: Auction): Promise<jsPDF> {
   const doc = new jsPDF({
     unit: 'mm',
     format: [80, 150] // Receipt-style format
@@ -31,10 +32,12 @@ function generateBillPDF(auction: Auction): jsPDF {
   const pageWidth = 80;
   const margin = 5;
   let y = 10;
+  
+  await setupPdfFont(doc);
 
   // Header
   doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('NotoSansTamil', 'bold');
   doc.text("St.John's Cathedral Nazareth", pageWidth / 2, y, { align: 'center' });
   y += 6;
   doc.setFontSize(10);
@@ -42,7 +45,7 @@ function generateBillPDF(auction: Auction): jsPDF {
   y += 6;
 
   doc.setFontSize(8);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('NotoSansTamil', 'normal');
   doc.text('Invoice / Bill of Sale', pageWidth / 2, y, { align: 'center' });
   y += 8;
 
@@ -65,7 +68,7 @@ function generateBillPDF(auction: Auction): jsPDF {
   y += 7;
   
   doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('NotoSansTamil', 'bold');
   if (auction.isPaid) {
     doc.setTextColor(22, 101, 52); // Dark green
   } else {
@@ -74,7 +77,7 @@ function generateBillPDF(auction: Auction): jsPDF {
   doc.text(`Status: ${auction.isPaid ? 'PAID' : 'UNPAID'}`, margin, y);
   doc.setTextColor(0); // Reset to black
   doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('NotoSansTamil', 'normal');
   
   y += 8;
 
@@ -95,7 +98,7 @@ function generateBillPDF(auction: Auction): jsPDF {
     styles: {
       fontSize: 7,
       cellPadding: 1.5,
-      font: 'helvetica',
+      font: 'NotoSansTamil',
     },
     headStyles: {
       fillColor: [50, 50, 50],
@@ -120,14 +123,14 @@ function generateBillPDF(auction: Auction): jsPDF {
   y += 5;
 
   doc.setFontSize(11);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('NotoSansTamil', 'bold');
   doc.text('TOTAL:', margin, y);
   doc.text(formatNumberINR(auction.totalAmount), pageWidth - margin, y, { align: 'right' });
   y += 8;
 
   // Footer
   doc.setFontSize(7);
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('NotoSansTamil', 'normal');
   doc.setTextColor(100);
   doc.text('May God Bless You!', pageWidth / 2, y, { align: 'center' });
   y += 4;
@@ -158,7 +161,7 @@ async function sharePDFNative(doc: jsPDF, filename: string): Promise<void> {
 export async function printBill(auction: Auction): Promise<void> {
   if (isNative()) {
     // On native platform, generate PDF and share
-    const doc = generateBillPDF(auction);
+    const doc = await generateBillPDF(auction);
     const filename = `bill_${auction.personName.replace(/\s+/g, '_')}_${dayjs().format('YYYYMMDD_HHmm')}.pdf`;
     await sharePDFNative(doc, filename);
   } else {

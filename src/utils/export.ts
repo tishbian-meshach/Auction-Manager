@@ -7,6 +7,7 @@ import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import type { Auction } from '../api';
 import { isNative } from './platform';
+import { setupPdfFont } from './fontLoader';
 
 interface ExportFilters {
     filterType: 'all' | 'month' | 'date';
@@ -109,17 +110,21 @@ export async function exportToPDF(auctions: Auction[], filters: ExportFilters): 
     }
 
     const doc = new jsPDF();
+    
+    // Inject the Tamil TTF font into jsPDF instance for Native PDF generation
+    await setupPdfFont(doc);
+    
     const filterText = getFilterDescription(filters);
     const exportDate = dayjs().format('DD MMM YYYY, hh:mm A');
 
     // Title
     doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('NotoSansTamil', 'bold');
     doc.text('Auction Report', 14, 20);
 
     // Filters applied
     doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('NotoSansTamil', 'normal');
     doc.setTextColor(100);
     doc.text(`Filters: ${filterText}`, 14, 28);
     doc.text(`Exported on: ${exportDate}`, 14, 34);
@@ -150,7 +155,7 @@ export async function exportToPDF(auctions: Auction[], filters: ExportFilters): 
         styles: {
             fontSize: 9,
             cellPadding: 3,
-            font: 'helvetica',
+            font: 'NotoSansTamil',
         },
         headStyles: {
             fillColor: [59, 130, 246],
