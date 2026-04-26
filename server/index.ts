@@ -83,7 +83,7 @@ app.post('/api/auctions', async (req, res) => {
 
         const { personName, mobileNumber, streetName, auctionDate, items, isPaid } = req.body;
 
-        if (!personName || !mobileNumber || !auctionDate || !items || items.length === 0) {
+        if (!personName || !auctionDate || !items || items.length === 0) {
             return res.status(400).json({
                 error: 'Missing required fields'
             });
@@ -97,7 +97,7 @@ app.post('/api/auctions', async (req, res) => {
         console.log('Inserting auction...');
         const [newAuction] = await db.insert(auctions).values({
             personName,
-            mobileNumber,
+            mobileNumber: mobileNumber || '',
             streetName: streetName || null,
             auctionDate: String(auctionDate).split('T')[0],
             totalAmount: totalAmount.toFixed(2),
@@ -177,7 +177,7 @@ app.put('/api/auctions/:id', async (req, res) => {
         const { id } = req.params;
         const { personName, mobileNumber, streetName, auctionDate, items, isPaid } = req.body;
 
-        if (!personName || !mobileNumber || !auctionDate || !items || items.length === 0) {
+        if (!personName || !auctionDate || !items || items.length === 0) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
@@ -189,7 +189,7 @@ app.put('/api/auctions/:id', async (req, res) => {
             .update(auctions)
             .set({
                 personName,
-                mobileNumber,
+                mobileNumber: mobileNumber || '',
                 streetName: streetName || null,
                 auctionDate: String(auctionDate).split('T')[0],
                 totalAmount: totalAmount.toFixed(2),

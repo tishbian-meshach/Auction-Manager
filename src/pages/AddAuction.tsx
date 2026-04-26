@@ -103,9 +103,7 @@ export function AddAuction() {
             newErrors.personName = 'Person name is required';
         }
 
-        if (!mobileNumber.trim()) {
-            newErrors.mobileNumber = 'Mobile number is required';
-        } else if (!/^\d{10}$/.test(mobileNumber.trim())) {
+        if (mobileNumber.trim() && !/^\d{10}$/.test(mobileNumber.trim())) {
             newErrors.mobileNumber = 'Enter a valid 10-digit mobile number';
         }
 
@@ -240,14 +238,14 @@ export function AddAuction() {
                     {/* Mobile Number */}
                     <div>
                         <label className="block text-sm font-medium text-neutral-300 mb-2">
-                            Mobile Number
+                            Mobile Number <span className="text-neutral-500 text-xs font-normal">(Optional)</span>
                         </label>
                         <input
                             type="tel"
                             value={mobileNumber}
                             onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
                             className={`input ${errors.mobileNumber ? 'border-danger' : ''}`}
-                            placeholder="Enter 10-digit mobile number"
+                            placeholder="Enter 10-digit mobile number (Optional)"
                             inputMode="numeric"
                         />
                         {errors.mobileNumber && (

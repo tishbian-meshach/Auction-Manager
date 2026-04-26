@@ -112,7 +112,7 @@ app.post('/api/auctions', async (req, res) => {
 
         const { personName, mobileNumber, streetName, auctionDate, items, isPaid } = req.body;
 
-        if (!personName || !mobileNumber || !auctionDate || !items || items.length === 0) {
+        if (!personName || !auctionDate || !items || items.length === 0) {
             return res.status(400).json({
                 error: 'Missing required fields'
             });
@@ -208,7 +208,7 @@ app.put('/api/auctions/:id', async (req, res) => {
         const { id } = req.params;
         const { personName, mobileNumber, streetName, auctionDate, items, isPaid } = req.body;
 
-        if (!personName || !mobileNumber || !auctionDate || !items || items.length === 0) {
+        if (!personName || !auctionDate || !items || items.length === 0) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
