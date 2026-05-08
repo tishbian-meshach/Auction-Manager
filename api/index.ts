@@ -14,7 +14,7 @@ export const auctions = pgTable('auctions', {
     auctionDate: date('auction_date').notNull(),
     totalAmount: decimal('total_amount', { precision: 10, scale: 2 }).notNull(),
     isPaid: boolean('is_paid').default(false).notNull(),
-    paidDate: timestamp('paid_date'),
+    paidDate: timestamp('paid_date', { mode: 'string' }),
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -125,6 +125,8 @@ app.post('/api/auctions', async (req, res) => {
 
         console.log('Inserting auction...');
         const paidValue = isPaid || false;
+        const resolvedPaidDate = paidValue ? (paidDate ? new Date(paidDate).toISOString() : new Date().toISOString()) : null;
+        console.log('[DEBUG] isPaid:', isPaid, 'paidDate from body:', paidDate, 'resolvedPaidDate:', resolvedPaidDate);
         const [newAuction] = await db.insert(auctions).values({
             personName,
             mobileNumber,
@@ -132,9 +134,9 @@ app.post('/api/auctions', async (req, res) => {
             auctionDate: String(auctionDate).split('T')[0],
             totalAmount: totalAmount.toFixed(2),
             isPaid: paidValue,
-            paidDate: paidValue && paidDate ? new Date(paidDate) : null,
+            paidDate: resolvedPaidDate,
         }).returning();
-        console.log('Auction inserted:', newAuction.id);
+        console.log('[DEBUG] Inserted auction paidDate:', newAuction.paidDate);
 
         const itemsToInsert = items.map((item: { itemName: string; quantity: number; price: number }) => ({
             auctionId: newAuction.id,
@@ -164,9 +166,10 @@ app.patch('/api/auctions/:id/pay', async (req, res) => {
         const { id } = req.params;
         const { paidDate } = req.body || {};
 
+        const resolvedPaidDate = paidDate ? new Date(paidDate).toISOString() : new Date().toISOString();
         const [updatedAuction] = await db
             .update(auctions)
-            .set({ isPaid: true, paidDate: paidDate ? new Date(paidDate) : new Date() })
+            .set({ isPaid: true, paidDate: resolvedPaidDate })
             .where(eq(auctions.id, id))
             .returning();
 
@@ -224,14 +227,14 @@ app.put('/api/auctions/:id', async (req, res) => {
         // Fetch existing auction to preserve paidDate if already paid
         const existing = await db.query.auctions.findFirst({ where: eq(auctions.id, id) });
         const paidValue = isPaid || false;
-        let resolvedPaidDate: Date | null = null;
+        let resolvedPaidDate: string | null = null;
         if (paidValue) {
             if (paidDate) {
-                resolvedPaidDate = new Date(paidDate);
+                resolvedPaidDate = new Date(paidDate).toISOString();
             } else if (existing?.paidDate) {
                 resolvedPaidDate = existing.paidDate;
             } else {
-                resolvedPaidDate = new Date();
+                resolvedPaidDate = new Date().toISOString();
             }
         }
 

@@ -130,8 +130,8 @@ export function AuctionDetailModal({
                     </div>
 
                     {/* Total & Status */}
-                    <div className="card bg-accent/10 border-accent/30">
-                        <div className="flex items-center justify-between mb-3">
+                    <div className="card bg-accent/10 border-accent/30 space-y-3">
+                        <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <IndianRupee size={20} className="text-accent" />
                                 <span className="font-medium text-neutral-300">Total Amount</span>
@@ -157,8 +157,9 @@ export function AuctionDetailModal({
                             </div>
                         )}
                     </div>
+
                     {/* Action Buttons */}
-                    <div className="flex gap-2">
+                    <div className="flex gap-3 pt-1">
                         {!auction.isPaid && onMarkPaid && (
                             <button
                                 onClick={() => {
@@ -196,7 +197,7 @@ export function AuctionDetailModal({
                     </div>
 
                     {/* Created At */}
-                    <div className="text-center text-xs text-neutral-500">
+                    <div className="text-center text-xs text-neutral-500 pt-1">
                         Created on {formattedCreatedAt}
                     </div>
                 </div>

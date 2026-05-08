@@ -81,7 +81,7 @@ app.post('/api/auctions', async (req, res) => {
     try {
         console.log('POST /api/auctions - Request body:', JSON.stringify(req.body));
 
-        const { personName, mobileNumber, streetName, auctionDate, items, isPaid } = req.body;
+        const { personName, mobileNumber, streetName, auctionDate, items, isPaid, paidDate } = req.body;
 
         if (!personName || !auctionDate || !items || items.length === 0) {
             return res.status(400).json({
@@ -95,15 +95,19 @@ app.post('/api/auctions', async (req, res) => {
         );
 
         console.log('Inserting auction...');
+        const paidValue = isPaid || false;
+        const resolvedPaidDate = paidValue ? (paidDate ? new Date(paidDate).toISOString() : new Date().toISOString()) : null;
+        console.log('[DEBUG] isPaid:', isPaid, 'paidDate from body:', paidDate, 'resolvedPaidDate:', resolvedPaidDate);
         const [newAuction] = await db.insert(auctions).values({
             personName,
             mobileNumber: mobileNumber || '',
             streetName: streetName || null,
             auctionDate: String(auctionDate).split('T')[0],
             totalAmount: totalAmount.toFixed(2),
-            isPaid: isPaid || false,
+            isPaid: paidValue,
+            paidDate: resolvedPaidDate,
         }).returning();
-        console.log('Auction inserted:', newAuction.id);
+        console.log('[DEBUG] Inserted auction paidDate:', newAuction.paidDate);
 
         const itemsToInsert = items.map((item: { itemName: string; quantity: number; price: number }) => ({
             auctionId: newAuction.id,
@@ -130,10 +134,12 @@ app.post('/api/auctions', async (req, res) => {
 app.patch('/api/auctions/:id/pay', async (req, res) => {
     try {
         const { id } = req.params;
+        const { paidDate } = req.body || {};
 
+        const resolvedPaidDate = paidDate ? new Date(paidDate).toISOString() : new Date().toISOString();
         const [updatedAuction] = await db
             .update(auctions)
-            .set({ isPaid: true })
+            .set({ isPaid: true, paidDate: resolvedPaidDate })
             .where(eq(auctions.id, id))
             .returning();
 
@@ -175,7 +181,7 @@ app.delete('/api/auctions/:id', async (req, res) => {
 app.put('/api/auctions/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { personName, mobileNumber, streetName, auctionDate, items, isPaid } = req.body;
+        const { personName, mobileNumber, streetName, auctionDate, items, isPaid, paidDate } = req.body;
 
         if (!personName || !auctionDate || !items || items.length === 0) {
             return res.status(400).json({ error: 'Missing required fields' });
@@ -185,6 +191,20 @@ app.put('/api/auctions/:id', async (req, res) => {
             sum + parseFloat(String(item.price)), 0
         );
 
+        // Fetch existing auction to preserve paidDate if already paid
+        const existing = await db.query.auctions.findFirst({ where: eq(auctions.id, id) });
+        const paidValue = isPaid || false;
+        let resolvedPaidDate: string | null = null;
+        if (paidValue) {
+            if (paidDate) {
+                resolvedPaidDate = new Date(paidDate).toISOString();
+            } else if (existing?.paidDate) {
+                resolvedPaidDate = existing.paidDate;
+            } else {
+                resolvedPaidDate = new Date().toISOString();
+            }
+        }
+
         const [updatedAuction] = await db
             .update(auctions)
             .set({
@@ -193,7 +213,8 @@ app.put('/api/auctions/:id', async (req, res) => {
                 streetName: streetName || null,
                 auctionDate: String(auctionDate).split('T')[0],
                 totalAmount: totalAmount.toFixed(2),
-                isPaid: isPaid || false,
+                isPaid: paidValue,
+                paidDate: resolvedPaidDate,
             })
             .where(eq(auctions.id, id))
             .returning();

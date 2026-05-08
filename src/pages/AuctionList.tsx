@@ -263,20 +263,30 @@ export function AuctionList() {
             );
         }
 
-        // Apply date/month filter for counts
-        if (filterType === 'month') {
-            baseFiltered = baseFiltered.filter((auction) =>
-                dayjs(auction.auctionDate).isSame(selectedMonth, 'month')
-            );
-        } else if (filterType === 'date') {
-            baseFiltered = baseFiltered.filter((auction) =>
-                dayjs(auction.auctionDate).isSame(selectedDate, 'day')
-            );
-        }
+        // Helper to get the relevant date for an auction based on its paid status
+        const getRelevantDate = (auction: Auction) => {
+            if (auction.isPaid && auction.paidDate) {
+                return auction.paidDate;
+            }
+            return auction.auctionDate;
+        };
 
-        const all = baseFiltered.length;
-        const paid = baseFiltered.filter(a => a.isPaid).length;
-        const unpaid = baseFiltered.filter(a => !a.isPaid).length;
+        // For "all" count: an auction matches if EITHER its auctionDate or paidDate falls in range
+        const matchesDateFilter = (auction: Auction) => {
+            const relevantDate = getRelevantDate(auction);
+            if (filterType === 'month') {
+                return dayjs(relevantDate).isSame(selectedMonth, 'month');
+            } else if (filterType === 'date') {
+                return dayjs(relevantDate).isSame(selectedDate, 'day');
+            }
+            return true; // 'all' filterType
+        };
+
+        const dateFiltered = baseFiltered.filter(matchesDateFilter);
+
+        const all = dateFiltered.length;
+        const paid = dateFiltered.filter(a => a.isPaid).length;
+        const unpaid = dateFiltered.filter(a => !a.isPaid).length;
         return { all, paid, unpaid };
     }, [auctions, searchQuery, filterType, selectedMonth, selectedDate]);
 

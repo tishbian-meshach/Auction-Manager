@@ -9,7 +9,7 @@ export const auctions = pgTable('auctions', {
     auctionDate: date('auction_date').notNull(),
     totalAmount: decimal('total_amount', { precision: 12, scale: 2 }).notNull().default('0'),
     isPaid: boolean('is_paid').notNull().default(false),
-    paidDate: timestamp('paid_date'),
+    paidDate: timestamp('paid_date', { mode: 'string' }),
     createdAt: timestamp('created_at').notNull().defaultNow(),
 });
 

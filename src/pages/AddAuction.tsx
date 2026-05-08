@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Plus, Trash2, Loader2 } from 'lucide-react';
 import dayjs from 'dayjs';
-import { api, type CreateAuctionPayload } from '../api';
+import { api, type Auction, type CreateAuctionPayload } from '../api';
 import { Toast } from '../components/Toast';
 import { DatePicker } from '../components/DatePicker';
+import { AutocompleteInput } from '../components/AutocompleteInput';
 import { useToast } from '../hooks/useToast';
 
 interface ItemInput {
@@ -33,7 +34,59 @@ export function AddAuction() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoadingAuction, setIsLoadingAuction] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [allAuctions, setAllAuctions] = useState<Auction[]>([]);
     const { toast, showToast, hideToast } = useToast();
+
+    // Fetch all auctions for suggestions
+    useEffect(() => {
+        api.getAuctions().then(setAllAuctions).catch(() => {});
+    }, []);
+
+    // Extract unique person names for suggestions
+    const personNameSuggestions = useMemo(() => {
+        const names = new Set<string>();
+        allAuctions.forEach((a) => {
+            if (a.personName.trim()) names.add(a.personName.trim());
+        });
+        return Array.from(names).sort((a, b) => a.localeCompare(b));
+    }, [allAuctions]);
+
+    // Extract unique item names for suggestions
+    const itemNameSuggestions = useMemo(() => {
+        const names = new Set<string>();
+        allAuctions.forEach((a) => {
+            a.items.forEach((item) => {
+                if (item.itemName.trim()) names.add(item.itemName.trim());
+            });
+        });
+        return Array.from(names).sort((a, b) => a.localeCompare(b));
+    }, [allAuctions]);
+
+    // Build a lookup map from person name to their most recent mobile/street
+    const personDataMap = useMemo(() => {
+        const map = new Map<string, { mobileNumber: string; streetName: string }>();
+        // Sort by createdAt ascending so newest overwrites oldest
+        const sorted = [...allAuctions].sort(
+            (a, b) => dayjs(a.createdAt).valueOf() - dayjs(b.createdAt).valueOf()
+        );
+        sorted.forEach((a) => {
+            map.set(a.personName.trim().toLowerCase(), {
+                mobileNumber: a.mobileNumber || '',
+                streetName: a.streetName || '',
+            });
+        });
+        return map;
+    }, [allAuctions]);
+
+    // Auto-fill mobile/street when person name matches a known entry
+    const handlePersonNameChange = (name: string) => {
+        setPersonName(name);
+        const data = personDataMap.get(name.trim().toLowerCase());
+        if (data) {
+            if (data.mobileNumber && !mobileNumber) setMobileNumber(data.mobileNumber);
+            if (data.streetName && !streetName) setStreetName(data.streetName);
+        }
+    };
 
     // Fetch existing auction if in edit mode
     useEffect(() => {
@@ -228,10 +281,10 @@ export function AddAuction() {
                         <label className="block text-sm font-medium text-neutral-300 mb-2">
                             Person Name
                         </label>
-                        <input
-                            type="text"
+                        <AutocompleteInput
                             value={personName}
-                            onChange={(e) => setPersonName(e.target.value)}
+                            onChange={handlePersonNameChange}
+                            suggestions={personNameSuggestions}
                             className={`input ${errors.personName ? 'border-danger' : ''}`}
                             placeholder="Enter person name"
                         />
@@ -317,10 +370,10 @@ export function AddAuction() {
                                         )}
                                     </div>
 
-                                    <input
-                                        type="text"
+                                    <AutocompleteInput
                                         value={item.itemName}
-                                        onChange={(e) => updateItem(item.id, 'itemName', e.target.value)}
+                                        onChange={(val) => updateItem(item.id, 'itemName', val)}
+                                        suggestions={itemNameSuggestions}
                                         className="input text-sm py-2.5"
                                         placeholder="Item name"
                                     />

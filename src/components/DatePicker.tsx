@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import dayjs from 'dayjs';
 
@@ -10,10 +10,23 @@ interface DatePickerProps {
 
 export function DatePicker({ value, onChange, error }: DatePickerProps) {
     const [isOpen, setIsOpen] = useState(false);
+    const [openAbove, setOpenAbove] = useState(false);
     const [viewDate, setViewDate] = useState(dayjs(value || undefined));
     const containerRef = useRef<HTMLDivElement>(null);
+    const buttonRef = useRef<HTMLButtonElement>(null);
 
     const selectedDate = value ? dayjs(value) : null;
+
+    const calculatePosition = useCallback(() => {
+        if (buttonRef.current) {
+            const rect = buttonRef.current.getBoundingClientRect();
+            const calendarHeight = 380; // approximate height of the calendar dropdown
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const spaceAbove = rect.top;
+            // Open above if not enough space below and more space above
+            setOpenAbove(spaceBelow < calendarHeight && spaceAbove > spaceBelow);
+        }
+    }, []);
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -25,6 +38,13 @@ export function DatePicker({ value, onChange, error }: DatePickerProps) {
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    const handleToggle = () => {
+        if (!isOpen) {
+            calculatePosition();
+        }
+        setIsOpen(!isOpen);
+    };
 
     const daysInMonth = viewDate.daysInMonth();
     const firstDayOfMonth = viewDate.startOf('month').day();
@@ -79,8 +99,9 @@ export function DatePicker({ value, onChange, error }: DatePickerProps) {
     return (
         <div ref={containerRef} className="relative">
             <button
+                ref={buttonRef}
                 type="button"
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={handleToggle}
                 className={`input flex items-center justify-between cursor-pointer ${error ? 'border-danger' : ''
                     }`}
             >
@@ -91,7 +112,12 @@ export function DatePicker({ value, onChange, error }: DatePickerProps) {
             </button>
 
             {isOpen && (
-                <div className="absolute z-50 mt-2 left-0 right-0 bg-background-secondary border border-neutral-700 rounded-xl shadow-xl overflow-hidden">
+                <div
+                    className={`absolute z-50 left-0 right-0 bg-background-secondary border border-neutral-700 rounded-xl shadow-xl overflow-hidden ${
+                        openAbove ? 'bottom-full mb-2' : 'top-full mt-2'
+                    }`}
+                    style={{ maxHeight: 'calc(100vh - 40px)' }}
+                >
                     {/* Header */}
                     <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-700">
                         <button
