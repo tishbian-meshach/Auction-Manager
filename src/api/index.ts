@@ -18,6 +18,7 @@ export interface Auction {
     auctionDate: string;
     totalAmount: string;
     isPaid: boolean;
+    paidDate: string | null;
     createdAt: string;
     items: AuctionItem[];
 }
@@ -29,6 +30,7 @@ export interface CreateAuctionPayload {
     auctionDate: string;
     items: Omit<AuctionItem, 'id' | 'auctionId'>[];
     isPaid: boolean;
+    paidDate?: string;
 }
 
 export const api = {
@@ -63,9 +65,11 @@ export const api = {
         return response.json();
     },
 
-    async markAsPaid(id: string): Promise<Auction> {
+    async markAsPaid(id: string, paidDate: string): Promise<Auction> {
         const response = await fetch(`${API_BASE_URL}/api/auctions/${id}/pay`, {
             method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paidDate }),
         });
 
         if (!response.ok) {

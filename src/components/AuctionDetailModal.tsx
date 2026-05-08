@@ -1,4 +1,4 @@
-import { X, User, Phone, Calendar, Package, IndianRupee, Pencil, Trash2 } from 'lucide-react';
+import { X, User, Phone, Calendar, Package, IndianRupee, Pencil, Trash2, Clock } from 'lucide-react';
 import dayjs from 'dayjs';
 import type { Auction } from '../api';
 
@@ -23,6 +23,7 @@ export function AuctionDetailModal({
 
     const formattedDate = dayjs(auction.auctionDate).format('DD MMM YYYY');
     const formattedCreatedAt = dayjs(auction.createdAt).format('DD MMM YYYY, hh:mm A');
+    const formattedPaidDate = auction.paidDate ? dayjs(auction.paidDate).format('DD MMM YYYY') : null;
     const formattedAmount = new Intl.NumberFormat('en-IN', {
         style: 'currency',
         currency: 'INR',
@@ -147,6 +148,14 @@ export function AuctionDetailModal({
                                 {auction.isPaid ? 'Paid' : 'Not Paid'}
                             </span>
                         </div>
+
+                        {formattedPaidDate && (
+                            <div className="flex items-center gap-2 pt-3 border-t border-accent/20">
+                                <Clock size={16} className="text-green-400" />
+                                <span className="text-sm text-neutral-400">Paid on:</span>
+                                <span className="text-sm font-medium text-green-400">{formattedPaidDate}</span>
+                            </div>
+                        )}
                     </div>
                     {/* Action Buttons */}
                     <div className="flex gap-2">

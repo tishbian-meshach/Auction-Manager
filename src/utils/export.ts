@@ -113,6 +113,7 @@ function generateReportHTML(auctions: Auction[], filters: ExportFilters): string
     const unpaidAmount = auctions.filter(a => !a.isPaid).reduce((sum, a) => sum + parseFloat(a.totalAmount), 0);
 
     const rows = auctions.map((auction, index) => {
+        const paidDateFormatted = auction.paidDate ? dayjs(auction.paidDate).format('DD MMM YYYY') : '-';
         return `
             <tr>
                 <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${index + 1}</td>
@@ -126,6 +127,7 @@ function generateReportHTML(auctions: Auction[], filters: ExportFilters): string
                         ${auction.isPaid ? 'Paid' : 'Not Paid'}
                     </span>
                 </td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${paidDateFormatted}</td>
             </tr>
         `;
     }).join('');
@@ -173,6 +175,7 @@ function generateReportHTML(auctions: Auction[], filters: ExportFilters): string
             <th style="text-align: center;">Items</th>
             <th style="text-align: right;">Amount (Rs.)</th>
             <th style="text-align: center;">Status</th>
+            <th style="text-align: center;">Paid Date</th>
           </tr>
         </thead>
         <tbody>
@@ -211,7 +214,7 @@ export async function exportToExcel(auctions: Auction[], filters: ExportFilters)
         ['Total Records:', auctions.length.toString()],
         ['Total Amount:', formatCurrencyFull(totalAmount), 'Paid:', formatCurrencyFull(paidAmount), 'Unpaid:', formatCurrencyFull(unpaidAmount)],
         [],
-        ['#', 'Person Name', 'Mobile Number', 'Auction Date', 'Items Count', 'Total Amount', 'Payment Status'],
+        ['#', 'Person Name', 'Mobile Number', 'Auction Date', 'Items Count', 'Total Amount', 'Payment Status', 'Paid Date'],
     ];
 
     // Data rows
@@ -223,6 +226,7 @@ export async function exportToExcel(auctions: Auction[], filters: ExportFilters)
         auction.items.length,
         parseFloat(auction.totalAmount),
         auction.isPaid ? 'Paid' : 'Not Paid',
+        auction.paidDate ? dayjs(auction.paidDate).format('DD MMM YYYY') : '-',
     ]);
 
     // Items detail sheet
@@ -260,6 +264,7 @@ export async function exportToExcel(auctions: Auction[], filters: ExportFilters)
         { wch: 15 },
         { wch: 15 },
         { wch: 12 },
+        { wch: 15 },
         { wch: 15 },
         { wch: 15 },
     ];

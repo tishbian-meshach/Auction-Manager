@@ -4,10 +4,11 @@ import { Download, FileText, FileSpreadsheet, X } from 'lucide-react';
 interface ExportMenuProps {
     onExportPDF: () => void;
     onExportExcel: () => void;
+    onExportAnnualPDF?: () => void;
     disabled?: boolean;
 }
 
-export function ExportMenu({ onExportPDF, onExportExcel, disabled }: ExportMenuProps) {
+export function ExportMenu({ onExportPDF, onExportExcel, onExportAnnualPDF, disabled }: ExportMenuProps) {
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
@@ -77,6 +78,24 @@ export function ExportMenu({ onExportPDF, onExportExcel, disabled }: ExportMenuP
                                 <p className="text-xs text-neutral-500">Download as XLSX</p>
                             </div>
                         </button>
+
+                        {onExportAnnualPDF && (
+                            <button
+                                onClick={() => {
+                                    onExportAnnualPDF();
+                                    setIsOpen(false);
+                                }}
+                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-background-tertiary transition-colors text-left mt-1"
+                            >
+                                <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                                    <FileText size={16} className="text-blue-400" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium text-neutral-100">Annual Ledger PDF</p>
+                                    <p className="text-xs text-neutral-500">April to March format</p>
+                                </div>
+                            </button>
+                        )}
                     </div>
                 </div>
             )}

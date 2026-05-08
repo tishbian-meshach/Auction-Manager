@@ -26,6 +26,7 @@ export function AddAuction() {
     const [streetName, setStreetName] = useState('');
     const [auctionDate, setAuctionDate] = useState(dayjs().format('YYYY-MM-DD'));
     const [isPaid, setIsPaid] = useState(false);
+    const [paidDate, setPaidDate] = useState(dayjs().format('YYYY-MM-DD'));
     const [items, setItems] = useState<ItemInput[]>([
         { id: generateId(), itemName: '', quantity: '', price: '' },
     ]);
@@ -46,6 +47,7 @@ export function AddAuction() {
                     setStreetName(auction.streetName || '');
                     setAuctionDate(dayjs(auction.auctionDate).format('YYYY-MM-DD'));
                     setIsPaid(auction.isPaid);
+                    setPaidDate(auction.paidDate ? dayjs(auction.paidDate).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD'));
                     setItems(
                         auction.items.map((item) => ({
                             id: item.id || generateId(),
@@ -137,6 +139,7 @@ export function AddAuction() {
                 streetName: streetName.trim() || undefined,
                 auctionDate,
                 isPaid,
+                paidDate: isPaid ? paidDate : undefined,
                 items: items
                     .filter(
                         (item) =>
@@ -159,6 +162,7 @@ export function AddAuction() {
             setStreetName('');
             setAuctionDate(dayjs().format('YYYY-MM-DD'));
             setIsPaid(false);
+            setPaidDate(dayjs().format('YYYY-MM-DD'));
             setItems([{ id: generateId(), itemName: '', quantity: '', price: '' }]);
             setErrors({});
         } catch (error) {
@@ -182,6 +186,7 @@ export function AddAuction() {
                 streetName: streetName.trim() || undefined,
                 auctionDate,
                 isPaid,
+                paidDate: isPaid ? paidDate : undefined,
                 items: items
                     .filter(
                         (item) =>
@@ -364,7 +369,10 @@ export function AddAuction() {
                         <div className="flex gap-3">
                             <button
                                 type="button"
-                                onClick={() => setIsPaid(true)}
+                                onClick={() => {
+                                    setIsPaid(true);
+                                    if (!paidDate) setPaidDate(dayjs().format('YYYY-MM-DD'));
+                                }}
                                 className={`flex-1 py-3 rounded-lg font-medium transition-all ${isPaid
                                     ? 'bg-success text-white'
                                     : 'bg-background-tertiary text-neutral-400 hover:text-neutral-200'
@@ -384,6 +392,19 @@ export function AddAuction() {
                             </button>
                         </div>
                     </div>
+
+                    {/* Paid Date - shown only when isPaid */}
+                    {isPaid && (
+                        <div>
+                            <label className="block text-sm font-medium text-neutral-300 mb-2">
+                                Paid Date
+                            </label>
+                            <DatePicker
+                                value={paidDate}
+                                onChange={setPaidDate}
+                            />
+                        </div>
+                    )}
 
                     {/* Submit Button */}
                     <button

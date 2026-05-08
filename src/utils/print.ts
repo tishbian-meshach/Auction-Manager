@@ -198,6 +198,12 @@ function generateBillHTML(auction: Auction): string {
             ${auction.isPaid ? 'PAID' : 'UNPAID'}
           </span>
         </div>
+        ${auction.paidDate ? `
+        <div class="info-row">
+          <span class="info-label">Paid On:</span>
+          <span class="info-value">${dayjs(auction.paidDate).format('DD MMM YYYY')}</span>
+        </div>
+        ` : ''}
       </div>
 
       <table>

@@ -8,6 +8,7 @@ import { AuctionCardSkeleton } from '../components/Skeleton';
 import { EmptyState } from '../components/EmptyState';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { AuctionDetailModal } from '../components/AuctionDetailModal';
+import { PaidDatePickerModal } from '../components/PaidDatePickerModal';
 import { ExportMenu } from '../components/ExportMenu';
 import { Toast } from '../components/Toast';
 import { useToast } from '../hooks/useToast';
@@ -37,6 +38,10 @@ export function AuctionList() {
         isOpen: false,
         auctionId: null,
         type: 'pay',
+    });
+    const [paidDatePicker, setPaidDatePicker] = useState<{ isOpen: boolean; auctionId: string | null }>({
+        isOpen: false,
+        auctionId: null,
     });
     const { toast, showToast, hideToast } = useToast();
     const navigate = useNavigate();
@@ -105,7 +110,7 @@ export function AuctionList() {
             showToast('Cannot update while offline', 'error');
             return;
         }
-        setConfirmDialog({ isOpen: true, auctionId: id, type: 'pay' });
+        setPaidDatePicker({ isOpen: true, auctionId: id });
     };
 
     const handleDeleteAuction = (id: string) => {
@@ -120,23 +125,24 @@ export function AuctionList() {
         navigate(`/auctions/edit/${auction.id}`);
     };
 
-    const confirmMarkPaid = async () => {
-        const id = confirmDialog.auctionId;
+    const confirmMarkPaid = async (chosenPaidDate: string) => {
+        const id = paidDatePicker.auctionId;
         if (!id) return;
 
-        setConfirmDialog({ isOpen: false, auctionId: null, type: 'pay' });
+        setPaidDatePicker({ isOpen: false, auctionId: null });
         setUpdatingId(id);
 
         try {
-            await api.markAsPaid(id);
+            await api.markAsPaid(id, chosenPaidDate);
+            const paidDate = chosenPaidDate;
             const updatedAuctions = auctions.map((auction) =>
-                auction.id === id ? { ...auction, isPaid: true } : auction
+                auction.id === id ? { ...auction, isPaid: true, paidDate } : auction
             );
             setAuctions(updatedAuctions);
             await storage.saveAuctions(updatedAuctions);
 
             if (selectedAuction?.id === id) {
-                setSelectedAuction({ ...selectedAuction, isPaid: true });
+                setSelectedAuction({ ...selectedAuction, isPaid: true, paidDate });
             }
 
             showToast('Payment status updated', 'success');
@@ -193,22 +199,32 @@ export function AuctionList() {
             filtered = filtered.filter((auction) => !auction.isPaid);
         }
 
+        // Determine which date field to use for date/month filtering
+        // When filtering by 'paid', use paidDate; otherwise use auctionDate
+        const getFilterDate = (auction: Auction) => {
+            if (paymentFilter === 'paid' && auction.paidDate) {
+                return auction.paidDate;
+            }
+            return auction.auctionDate;
+        };
+
         // Apply date/month filter
         if (filterType === 'month') {
             filtered = filtered.filter((auction) =>
-                dayjs(auction.auctionDate).isSame(selectedMonth, 'month')
+                dayjs(getFilterDate(auction)).isSame(selectedMonth, 'month')
             );
         } else if (filterType === 'date') {
             filtered = filtered.filter((auction) =>
-                dayjs(auction.auctionDate).isSame(selectedDate, 'day')
+                dayjs(getFilterDate(auction)).isSame(selectedDate, 'day')
             );
         }
 
-        // Group by month
+        // Group by month (using the appropriate date field)
         const grouped: Record<string, Auction[]> = {};
 
         filtered.forEach((auction) => {
-            const monthKey = dayjs(auction.auctionDate).format('MMMM YYYY');
+            const dateForGrouping = getFilterDate(auction);
+            const monthKey = dayjs(dateForGrouping).format('MMMM YYYY');
             if (!grouped[monthKey]) {
                 grouped[monthKey] = [];
             }
@@ -221,9 +237,11 @@ export function AuctionList() {
             .map(([month, auctionsInMonth]) => ({
                 month,
                 auctions: auctionsInMonth.sort((a, b) => {
-                    const dateDiff = dayjs(b.auctionDate).valueOf() - dayjs(a.auctionDate).valueOf();
+                    const dateA = getFilterDate(a);
+                    const dateB = getFilterDate(b);
+                    const dateDiff = dayjs(dateB).valueOf() - dayjs(dateA).valueOf();
                     if (dateDiff !== 0) return dateDiff;
-                    // Fallback to createdAt if auctionDate is the same
+                    // Fallback to createdAt if date is the same
                     return dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf();
                 }),
             }));
@@ -280,6 +298,8 @@ export function AuctionList() {
             console.error('Error exporting PDF:', error);
         }
     };
+
+
 
     const handleExportExcel = async () => {
         try {
@@ -562,18 +582,22 @@ export function AuctionList() {
                 onDelete={handleDeleteAuction}
             />
 
-            {/* Confirm Dialog */}
+            {/* Paid Date Picker Modal */}
+            <PaidDatePickerModal
+                isOpen={paidDatePicker.isOpen}
+                onConfirm={confirmMarkPaid}
+                onCancel={() => setPaidDatePicker({ isOpen: false, auctionId: null })}
+            />
+
+            {/* Confirm Dialog (for delete only) */}
             <ConfirmDialog
                 isOpen={confirmDialog.isOpen}
-                title={confirmDialog.type === 'delete' ? 'Delete Auction' : 'Confirm Payment'}
-                message={confirmDialog.type === 'delete'
-                    ? 'Are you sure you want to delete this auction? This action cannot be undone.'
-                    : 'Are you sure you want to mark this auction as paid? This action cannot be undone.'
-                }
-                confirmLabel={confirmDialog.type === 'delete' ? 'Delete' : 'Mark as Paid'}
+                title={'Delete Auction'}
+                message={'Are you sure you want to delete this auction? This action cannot be undone.'}
+                confirmLabel={'Delete'}
                 cancelLabel="Cancel"
-                onConfirm={confirmDialog.type === 'delete' ? confirmDeleteAuction : confirmMarkPaid}
-                onCancel={() => setConfirmDialog({ isOpen: false, auctionId: null, type: 'pay' })}
+                onConfirm={confirmDeleteAuction}
+                onCancel={() => setConfirmDialog({ isOpen: false, auctionId: null, type: 'delete' })}
             />
 
             <Toast
